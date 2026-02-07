@@ -1,0 +1,110 @@
+image: eclipse-temurin:24-jdk
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+stages:
+  - build
+  - test
+  - integration-test
+  - quality
+  - deploy
+
+build:
+  stage: build
+  script:
+    - ./gradlew clean build -x test --no-daemon
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 week
+
+unit-test:
+  stage: test
+  script:
+    - ./gradlew test jacocoTestReport --no-daemon
+  artifacts:
+    reports:
+      junit: build/test-results/test/TEST-*.xml
+    paths:
+      - build/reports/tests/test/
+      - build/reports/jacoco/test/
+    expire_in: 1 week
+  coverage: '/Total.*?([0-9]{1,3})%/'
+
+integration-test:
+  stage: integration-test
+  services:
+    - postgres:15-alpine
+  variables:
+    POSTGRES_DB: bankslipgenerator_test
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_NAME: bankslipgenerator_test
+    DB_USERNAME: test
+    DB_PASSWORD: test
+  script:
+    - ./gradlew integrationTest --no-daemon
+  artifacts:
+    reports:
+      junit: build/test-results/integrationTest/TEST-*.xml
+    paths:
+      - build/reports/tests/integrationTest/
+    expire_in: 1 week
+
+quality-coverage:
+  stage: quality
+  script:
+    - ./gradlew jacocoTestCoverageVerification --no-daemon
+  allow_failure: false
+
+quality-mutation:
+  stage: quality
+  script:
+    - ./gradlew pitest --no-daemon
+  artifacts:
+    paths:
+      - build/reports/pitest/
+    expire_in: 1 week
+  allow_failure: true
+
+quality-sonar:
+  stage: quality
+  script:
+    - ./gradlew sonarqube -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN --no-daemon
+  only:
+    - main
+    - master
+    - develop
+  allow_failure: true
+
+deploy-staging:
+  stage: deploy
+  script:
+    - echo "Building Docker image for staging"
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  only:
+    - develop
+  when: manual
+
+deploy-production:
+  stage: deploy
+  script:
+    - echo "Building Docker image for production"
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+    - master
+  when: manual
+

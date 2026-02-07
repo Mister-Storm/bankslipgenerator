@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Application - Production Profile
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bankslipgenerator-prod
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - JAVA_OPTS=-Xmx2g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError
+
+      # Database
+      - DB_HOST=${PROD_DB_HOST}
+      - DB_PORT=${PROD_DB_PORT:-5432}
+      - DB_NAME=${PROD_DB_NAME:-bankslip_production}
+      - DB_USERNAME=${PROD_DB_USERNAME}
+      - DB_PASSWORD=${PROD_DB_PASSWORD}
+
+      # Redis
+      - REDIS_HOST=${PROD_REDIS_HOST}
+      - REDIS_PORT=${PROD_REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${PROD_REDIS_PASSWORD}
+      - REDIS_SSL=${PROD_REDIS_SSL:-true}
+
+      # JWT
+      - JWT_ISSUER_URI=${PROD_JWT_ISSUER_URI}
+      - JWT_JWK_SET_URI=${PROD_JWT_JWK_SET_URI}
+
+      # AWS
+      - AWS_REGION=${PROD_AWS_REGION:-us-east-1}
+      - S3_BUCKET=${PROD_S3_BUCKET:-bankslip-production}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+      # Banking APIs
+      - BB_API_URL=${PROD_BB_API_URL:-https://api.bb.com.br/cobrancas/v2}
+      - BB_CLIENT_ID=${PROD_BB_CLIENT_ID}
+      - BB_CLIENT_SECRET=${PROD_BB_CLIENT_SECRET}
+
+      - ITAU_API_URL=${PROD_ITAU_API_URL:-https://secure.api.itau/cash_management_ext/1.1.0}
+      - ITAU_CLIENT_ID=${PROD_ITAU_CLIENT_ID}
+      - ITAU_CLIENT_SECRET=${PROD_ITAU_CLIENT_SECRET}
+
+      - BRADESCO_API_URL=${PROD_BRADESCO_API_URL:-https://proxy.api.prebanco.com.br/v1}
+      - BRADESCO_CLIENT_ID=${PROD_BRADESCO_CLIENT_ID}
+      - BRADESCO_CLIENT_SECRET=${PROD_BRADESCO_CLIENT_SECRET}
+
+      - CAIXA_API_URL=${PROD_CAIXA_API_URL:-https://api.caixa.gov.br}
+      - CAIXA_CLIENT_ID=${PROD_CAIXA_CLIENT_ID}
+      - CAIXA_CLIENT_SECRET=${PROD_CAIXA_CLIENT_SECRET}
+
+      - SANTANDER_API_URL=${PROD_SANTANDER_API_URL:-https://trust-open.api.santander.com.br}
+      - SANTANDER_CLIENT_ID=${PROD_SANTANDER_CLIENT_ID}
+      - SANTANDER_CLIENT_SECRET=${PROD_SANTANDER_CLIENT_SECRET}
+
+      # Encryption
+      - ENCRYPTION_KEY=${PROD_ENCRYPTION_KEY}
+
+    ports:
+      - "8080:8080"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+    networks:
+      - bankslip-network
+
+networks:
+  bankslip-network:
+    driver: bridge
+

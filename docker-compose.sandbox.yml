@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Sandbox
+  postgres:
+    image: postgres:16-alpine
+    container_name: bankslipgenerator-postgres-sandbox
+    environment:
+      - POSTGRES_DB=bankslip_sandbox
+      - POSTGRES_USER=bankslip_sandbox
+      - POSTGRES_PASSWORD=${SANDBOX_DB_PASSWORD:-sandbox123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data-sandbox:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bankslip_sandbox"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bankslip-network
+
+  # Redis for Rate Limiting and Caching
+  redis:
+    image: redis:7-alpine
+    container_name: bankslipgenerator-redis-sandbox
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data-sandbox:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bankslip-network
+
+  # LocalStack for AWS Services (S3, KMS)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: bankslipgenerator-localstack-sandbox
+    environment:
+      - SERVICES=s3,kms
+      - DEFAULT_REGION=us-east-1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack-data-sandbox:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - bankslip-network
+
+  # Application - Sandbox Profile
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bankslipgenerator-sandbox
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=sandbox
+      - JAVA_OPTS=-Xmx1g -Xms256m -XX:+UseG1GC
+
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=bankslip_sandbox
+      - DB_USERNAME=bankslip_sandbox
+      - DB_PASSWORD=${SANDBOX_DB_PASSWORD:-sandbox123}
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_SSL=false
+
+      # JWT (for local testing)
+      - JWT_ISSUER_URI=${SANDBOX_JWT_ISSUER_URI:-http://sandbox-keycloak.example.com/auth/realms/bankslip}
+      - JWT_JWK_SET_URI=${SANDBOX_JWT_JWK_SET_URI:-http://sandbox-keycloak.example.com/auth/realms/bankslip/protocol/openid-connect/certs}
+
+      # AWS (LocalStack)
+      - AWS_REGION=us-east-1
+      - S3_BUCKET=bankslip-sandbox
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ENDPOINT_OVERRIDE=http://localstack:4566
+
+      # Banking APIs (Sandbox URLs)
+      - BB_API_URL=https://api.hm.bb.com.br/cobrancas/v2
+      - BB_CLIENT_ID=${SANDBOX_BB_CLIENT_ID:-sandbox-bb-id}
+      - BB_CLIENT_SECRET=${SANDBOX_BB_CLIENT_SECRET:-sandbox-bb-secret}
+
+      - ITAU_API_URL=https://sandbox-api.itau.com.br/cash_management_ext/1.1.0
+      - ITAU_CLIENT_ID=${SANDBOX_ITAU_CLIENT_ID:-sandbox-itau-id}
+      - ITAU_CLIENT_SECRET=${SANDBOX_ITAU_CLIENT_SECRET:-sandbox-itau-secret}
+
+      - BRADESCO_API_URL=https://sandbox.bradesco.com.br/v1
+      - BRADESCO_CLIENT_ID=${SANDBOX_BRADESCO_CLIENT_ID:-sandbox-bradesco-id}
+      - BRADESCO_CLIENT_SECRET=${SANDBOX_BRADESCO_CLIENT_SECRET:-sandbox-bradesco-secret}
+
+      - CAIXA_API_URL=https://sandbox.caixa.gov.br
+      - CAIXA_CLIENT_ID=${SANDBOX_CAIXA_CLIENT_ID:-sandbox-caixa-id}
+      - CAIXA_CLIENT_SECRET=${SANDBOX_CAIXA_CLIENT_SECRET:-sandbox-caixa-secret}
+
+      - SANTANDER_API_URL=https://sandbox-trust-open.api.santander.com.br
+      - SANTANDER_CLIENT_ID=${SANDBOX_SANTANDER_CLIENT_ID:-sandbox-santander-id}
+      - SANTANDER_CLIENT_SECRET=${SANDBOX_SANTANDER_CLIENT_SECRET:-sandbox-santander-secret}
+
+      # Encryption (use a simple key for sandbox)
+      - ENCRYPTION_KEY=sandbox-encryption-key-32chars!!
+
+    ports:
+      - "8080:8080"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+
+    restart: unless-stopped
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    networks:
+      - bankslip-network
+
+volumes:
+  postgres-data-sandbox:
+  redis-data-sandbox:
+  localstack-data-sandbox:
+
+networks:
+  bankslip-network:
+    driver: bridge
+

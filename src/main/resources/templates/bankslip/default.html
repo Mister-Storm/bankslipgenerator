@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            margin: 20px;
+        }
+        .bankslip {
+            border: 2px solid #000;
+            padding: 15px;
+            width: 700px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .field {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        .field-label {
+            font-size: 8pt;
+            color: #666;
+        }
+        .field-value {
+            font-weight: bold;
+        }
+        .barcode {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .barcode img {
+            width: 400px;
+            height: 50px;
+        }
+        .digitable-line {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 10px 0;
+            letter-spacing: 2px;
+        }
+        .instructions {
+            border-top: 1px solid #000;
+            margin-top: 15px;
+            padding-top: 10px;
+        }
+        .instructions-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bankslip">
+        <div class="header">
+            <div>
+                <h2 th:text="${bankslip.bankCode}">001</h2>
+            </div>
+            <div>
+                <strong>BOLETO BANCÁRIO</strong>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Beneficiário</div>
+                <div class="field-value" th:text="${bankslip.beneficiary.name}">Company Name</div>
+            </div>
+            <div class="field">
+                <div class="field-label">CNPJ/CPF</div>
+                <div class="field-value" th:text="${bankslip.beneficiary.documentNumber}">12.345.678/0001-90</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Agência/Código Beneficiário</div>
+                <div class="field-value" th:text="${bankslip.beneficiary.agencyNumber + ' / ' + bankslip.beneficiary.accountNumber + '-' + bankslip.beneficiary.accountDigit}">1234 / 567890-1</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Nosso Número</div>
+                <div class="field-value" th:text="${bankslip.documentNumber}">123456789</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Data do Documento</div>
+                <div class="field-value" th:text="${#temporals.format(bankslip.issueDate, 'dd/MM/yyyy')}">01/01/2024</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Data de Vencimento</div>
+                <div class="field-value" th:text="${#temporals.format(bankslip.dueDate, 'dd/MM/yyyy')}">31/01/2024</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Valor do Documento</div>
+                <div class="field-value" th:text="${'R$ ' + #numbers.formatDecimal(bankslip.amount, 1, 2)}">R$ 100,00</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Pagador</div>
+                <div class="field-value" th:text="${bankslip.payer.name}">John Doe</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">CPF/CNPJ Pagador</div>
+                <div class="field-value" th:text="${bankslip.payer.documentNumber}">123.456.789-00</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Endereço Pagador</div>
+                <div class="field-value" th:text="${bankslip.payer.address.street + ', ' + bankslip.payer.address.number + ' - ' + bankslip.payer.address.neighborhood}">Street, 123 - Neighborhood</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Cidade/Estado</div>
+                <div class="field-value" th:text="${bankslip.payer.address.city + '/' + bankslip.payer.address.state}">São Paulo/SP</div>
+            </div>
+            <div class="field">
+                <div class="field-label">CEP</div>
+                <div class="field-value" th:text="${bankslip.payer.address.zipCode}">01234-567</div>
+            </div>
+        </div>
+
+        <div class="instructions" th:if="${not #lists.isEmpty(bankslip.instructions)}">
+            <div class="instructions-title">Instruções</div>
+            <div th:each="instruction : ${bankslip.instructions}">
+                <div th:text="${instruction}">Instruction text</div>
+            </div>
+        </div>
+
+        <div class="barcode">
+            <img th:src="${barcodeImage}" alt="Barcode"/>
+        </div>
+
+        <div class="digitable-line" th:text="${bankslip.digitableLine}">
+            12345.67890 12345.678901 12345.678901 1 12340000010000
+        </div>
+    </div>
+</body>
+</html>
+

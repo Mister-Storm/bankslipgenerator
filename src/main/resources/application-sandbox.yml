@@ -1,0 +1,253 @@
+# Sandbox Profile Configuration - Homologation Environment
+spring:
+  config:
+    activate:
+      on-profile: sandbox
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:sandbox-db.example.com}:${DB_PORT:5432}/${DB_NAME:bankslip_sandbox}
+    username: ${DB_USERNAME:bankslip_sandbox}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: false
+    locations: classpath:db/migration
+  redis:
+    host: ${REDIS_HOST:sandbox-redis.example.com}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    ssl: false
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 5
+        min-idle: 2
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://sandbox-keycloak.example.com/auth/realms/bankslip}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://sandbox-keycloak.example.com/auth/realms/bankslip/protocol/openid-connect/certs}
+# Application specific configuration for sandbox
+app:
+  storage:
+    type: s3
+    s3:
+      bucket: ${S3_BUCKET:bankslip-sandbox}
+      region: ${AWS_REGION:us-east-1}
+  cnab:
+    async-processing: true
+    max-batch-size: 100
+  pdf:
+    template-path: classpath:templates/bankslip
+  security:
+    encryption:
+      key: ${ENCRYPTION_KEY:sandbox-encryption-key-32chars!!}
+      algorithm: AES/GCM/NoPadding
+  rate-limit:
+    enabled: true
+    default-limit: 100
+    window-seconds: 60
+  idempotency:
+    enabled: true
+    ttl-hours: 1
+
+# Banking API Configuration - Sandbox/Homologation
+banking:
+  banco-do-brasil:
+    api-url: ${BB_API_URL:https://api.hm.bb.com.br/cobrancas/v2}
+    client-id: ${BB_CLIENT_ID:sandbox-bb-client-id}
+    client-secret: ${BB_CLIENT_SECRET:sandbox-bb-secret}
+    cert-path: ${BB_CERT_PATH:}
+    timeout-ms: 60000
+    max-retries: 3
+    circuit-breaker:
+      enabled: true
+      failure-rate-threshold: 70
+      wait-duration-in-open-state: 30000
+
+  itau:
+    api-url: ${ITAU_API_URL:https://sandbox-api.itau.com.br/cash_management_ext/1.1.0}
+    client-id: ${ITAU_CLIENT_ID:sandbox-itau-client-id}
+    client-secret: ${ITAU_CLIENT_SECRET:sandbox-itau-secret}
+    cert-path: ${ITAU_CERT_PATH:}
+    timeout-ms: 60000
+    max-retries: 3
+    circuit-breaker:
+      enabled: true
+      failure-rate-threshold: 70
+      wait-duration-in-open-state: 30000
+
+  bradesco:
+    api-url: ${BRADESCO_API_URL:https://sandbox.bradesco.com.br/v1}
+    client-id: ${BRADESCO_CLIENT_ID:sandbox-bradesco-client-id}
+    client-secret: ${BRADESCO_CLIENT_SECRET:sandbox-bradesco-secret}
+    cert-path: ${BRADESCO_CERT_PATH:}
+    timeout-ms: 60000
+    max-retries: 3
+    circuit-breaker:
+      enabled: true
+      failure-rate-threshold: 70
+      wait-duration-in-open-state: 30000
+
+  caixa:
+    api-url: ${CAIXA_API_URL:https://sandbox.caixa.gov.br}
+    client-id: ${CAIXA_CLIENT_ID:sandbox-caixa-client-id}
+    client-secret: ${CAIXA_CLIENT_SECRET:sandbox-caixa-secret}
+    cert-path: ${CAIXA_CERT_PATH:}
+    timeout-ms: 60000
+    max-retries: 3
+    circuit-breaker:
+      enabled: true
+      failure-rate-threshold: 70
+      wait-duration-in-open-state: 30000
+
+  santander:
+    api-url: ${SANTANDER_API_URL:https://sandbox-trust-open.api.santander.com.br}
+    client-id: ${SANTANDER_CLIENT_ID:sandbox-santander-client-id}
+    client-secret: ${SANTANDER_CLIENT_SECRET:sandbox-santander-secret}
+    cert-path: ${SANTANDER_CERT_PATH:}
+    timeout-ms: 60000
+    max-retries: 3
+    circuit-breaker:
+      enabled: true
+      failure-rate-threshold: 70
+      wait-duration-in-open-state: 30000
+
+# Webhook Configuration
+webhook:
+  max-retries: 3
+  retry-delay-ms: 3000
+  timeout-ms: 10000
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: sandbox
+
+# Logging configuration for sandbox
+logging:
+  level:
+    root: DEBUG
+    br.com.misterstorm.bankslipgenerator: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.jdbc: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+    encryption:
+      algorithm: AES/GCM/NoPadding
+      key: ${ENCRYPTION_KEY:dGVzdC1rZXktZm9yLXNhbmRib3gtZW52aXJvbm1lbnQ=}
+      keySize: 256
+  webhook:
+    threadPoolSize: 10
+    maxRetries: 5
+    retryDelay: 3000
+    timeout: 30000
+  banks:
+    bb:
+      apiUrl: https://api.hm.bb.com.br/cobrancas/v2
+      authUrl: https://oauth.hm.bb.com.br/oauth/token
+    itau:
+      apiUrl: https://sandbox.itau.com.br/cash_management/v2
+      authUrl: https://sandbox.itau.com.br/auth/oauth/v2/token
+    bradesco:
+      webserviceUrl: https://homologacao.bradesconetempresa.b.br/ibpjbolorg/services
+    caixa:
+      apiUrl: https://sandbox-api.caixa.gov.br/cobranca-bancaria/v1
+      certificatePath: ${CAIXA_CERT_PATH:/certs/caixa-sandbox.p12}
+      certificatePassword: ${CAIXA_CERT_PASSWORD:sandbox}
+    santander:
+      apiUrl: https://sandbox-api.santander.com.br/collection_bill/v1
+      apiKey: ${SANTANDER_API_KEY:sandbox-api-key}
+  rate-limit:
+    enabled: true
+    default-capacity: 500
+    refill-tokens: 50
+    refill-period-seconds: 6
+  idempotency:
+    enabled: true
+    ttl-hours: 1
+  dead-letter-queue:
+    cleanup-enabled: true
+    retention-days: 7
+# Resilience4j Circuit Breaker configuration for sandbox
+resilience4j:
+  circuitbreaker:
+    instances:
+      bancoDoBrasil:
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 60
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      itau:
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 60
+      bradesco:
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 2
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 60
+      webhook:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 70
+  retry:
+    instances:
+      bancoDoBrasil:
+        maxAttempts: 2
+        waitDuration: 3s
+        exponentialBackoffMultiplier: 1.5
+      itau:
+        maxAttempts: 2
+        waitDuration: 3s
+        exponentialBackoffMultiplier: 1.5
+      bradesco:
+        maxAttempts: 2
+        waitDuration: 3s
+        exponentialBackoffMultiplier: 1.5
+# Actuator configuration for sandbox - all endpoints exposed
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+# Verbose logging for sandbox
+logging:
+  level:
+    root: DEBUG
+    br.com.misterstorm.bankslipgenerator: DEBUG
+    org.springframework.web: INFO
+    org.springframework.jdbc: DEBUG
+    org.springframework.data.redis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
