@@ -1,6 +1,8 @@
 package br.com.misterstorm.bankslipgenerator.application.usecase.bankslip
 
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
+import br.com.misterstorm.bankslipgenerator.domain.event.DomainEvent
+import br.com.misterstorm.bankslipgenerator.domain.event.DomainEventPublisher
 import br.com.misterstorm.bankslipgenerator.domain.model.*
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.StructuredLogger
 import kotlinx.coroutines.test.runTest
@@ -18,13 +20,14 @@ import kotlin.test.assertTrue
 class PayBankslipUseCaseTest {
 
     private val logger = StructuredLogger("PayBankslipUseCaseTest")
+    private val eventPublisher = TestDomainEventPublisher()
 
     @Test
     fun `ensure pays bankslip successfully when bankslip is registered`() = runTest {
         // Arrange
         val bankslip = createTestBankslip(status = BankslipStatus.REGISTERED)
         val repository = BankslipRepositoryFixture(bankslip)
-        val useCase = PayBankslipUseCase(repository, logger)
+        val useCase = PayBankslipUseCase(repository, eventPublisher, logger)
 
         val input = PayBankslipUseCase.Input(
             bankslipId = bankslip.id,
@@ -37,11 +40,10 @@ class PayBankslipUseCaseTest {
 
         // Assert
         assertTrue(result.isRight())
-        result.onRight { updatedBankslip ->
-            assertEquals(BankslipStatus.PAID, updatedBankslip.status)
-            assertEquals(input.paidAmount, updatedBankslip.paidAmount)
-            assertTrue(updatedBankslip.paymentDate != null)
-        }
+        val updatedBankslip = result.getOrNull()!!
+        assertEquals(BankslipStatus.PAID, updatedBankslip.status)
+        assertEquals(input.paidAmount, updatedBankslip.paidAmount)
+        assertTrue(updatedBankslip.paymentDate != null)
     }
 
     @Test
@@ -53,7 +55,7 @@ class PayBankslipUseCaseTest {
             paidAmount = BigDecimal("100.00")
         )
         val repository = BankslipRepositoryFixture(bankslip)
-        val useCase = PayBankslipUseCase(repository, logger)
+        val useCase = PayBankslipUseCase(repository, eventPublisher, logger)
 
         val input = PayBankslipUseCase.Input(
             bankslipId = bankslip.id,
@@ -76,7 +78,7 @@ class PayBankslipUseCaseTest {
         // Arrange
         val bankslip = createTestBankslip(status = BankslipStatus.CANCELLED)
         val repository = BankslipRepositoryFixture(bankslip)
-        val useCase = PayBankslipUseCase(repository, logger)
+        val useCase = PayBankslipUseCase(repository, eventPublisher, logger)
 
         val input = PayBankslipUseCase.Input(
             bankslipId = bankslip.id,
@@ -98,7 +100,7 @@ class PayBankslipUseCaseTest {
     fun `ensure fails to pay bankslip when not found`() = runTest {
         // Arrange
         val repository = BankslipRepositoryFixture()
-        val useCase = PayBankslipUseCase(repository, logger)
+        val useCase = PayBankslipUseCase(repository, eventPublisher, logger)
 
         val input = PayBankslipUseCase.Input(
             bankslipId = UUID.randomUUID(),
@@ -168,7 +170,7 @@ class PayBankslipUseCaseTest {
     }
 
     private class BankslipRepositoryFixture(
-        private val existingBankslip: Bankslip? = null
+        existingBankslip: Bankslip? = null
     ) : br.com.misterstorm.bankslipgenerator.domain.port.BankslipRepository {
         private val storage = mutableMapOf<UUID, Bankslip>()
 
@@ -190,13 +192,13 @@ class PayBankslipUseCaseTest {
         override suspend fun findByBarcode(barcode: String) =
             arrow.core.Either.Left(DomainError.BankslipNotFound(barcode))
 
-        override suspend fun findByStatus(status: BankslipStatus, page: Int, size: Int) =
+        override suspend fun findByStatus(status: BankslipStatus, page: Int, size: Int): arrow.core.Either<DomainError, List<Bankslip>> =
             arrow.core.Either.Right(emptyList())
 
-        override suspend fun findByDueDateBetween(startDate: LocalDate, endDate: LocalDate) =
+        override suspend fun findByDueDateBetween(startDate: LocalDate, endDate: LocalDate): arrow.core.Either<DomainError, List<Bankslip>> =
             arrow.core.Either.Right(emptyList())
 
-        override suspend fun findByPayerDocumentNumber(documentNumber: String, page: Int, size: Int) =
+        override suspend fun findByPayerDocumentNumber(documentNumber: String, page: Int, size: Int): arrow.core.Either<DomainError, List<Bankslip>> =
             arrow.core.Either.Right(emptyList())
 
         override suspend fun update(bankslip: Bankslip) =
@@ -205,6 +207,21 @@ class PayBankslipUseCaseTest {
         override suspend fun delete(id: UUID) = arrow.core.Either.Right(Unit)
 
         override suspend fun softDelete(id: UUID) = arrow.core.Either.Right(Unit)
+    }
+}
+
+/**
+ * Fixture (stub) for DomainEventPublisher
+ */
+class TestDomainEventPublisher : DomainEventPublisher {
+    val publishedEvents = mutableListOf<DomainEvent>()
+
+    override suspend fun publish(event: DomainEvent) {
+        publishedEvents.add(event)
+    }
+
+    override suspend fun publishAll(events: List<DomainEvent>) {
+        publishedEvents.addAll(events)
     }
 }
 

@@ -1,9 +1,9 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.controller
 
 import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.*
-import br.com.misterstorm.bankslipgenerator.domain.model.*
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
+import io.restassured.module.kotlin.extensions.Extract
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -63,18 +63,16 @@ class BankslipControllerIntegrationTest {
     fun `ensure retrieves bankslip by id via REST API`() {
         // Arrange - Create a bankslip first
         val request = createValidBankslipRequest()
-        val createResponse = Given {
+
+        val bankslipId: String = Given {
             contentType(ContentType.JSON)
             body(request)
             header("API-Version", "v1")
         } When {
             post("/api/bankslips")
-        } Then {
-            statusCode(201)
-            extract().response()
+        } Extract {
+            path("id")
         }
-
-        val bankslipId = createResponse.path<String>("id")
 
         // Act & Assert
         Given {
@@ -83,7 +81,7 @@ class BankslipControllerIntegrationTest {
             get("/api/bankslips/$bankslipId")
         } Then {
             statusCode(200)
-            body("id", equalTo(bankslipId))
+            body("id", equalTo<String>(bankslipId))
             body("status", equalTo("CREATED"))
         }
     }
@@ -111,18 +109,16 @@ class BankslipControllerIntegrationTest {
     fun `ensure soft deletes bankslip via REST API`() {
         // Arrange - Create a bankslip first
         val request = createValidBankslipRequest()
-        val createResponse = Given {
+
+        val bankslipId: String = Given {
             contentType(ContentType.JSON)
             body(request)
             header("API-Version", "v1")
         } When {
             post("/api/bankslips")
-        } Then {
-            statusCode(201)
-            extract().response()
+        } Extract {
+            path("id")
         }
-
-        val bankslipId = createResponse.path<String>("id")
 
         // Act & Assert
         Given {
@@ -185,4 +181,3 @@ class BankslipControllerIntegrationTest {
         }
     }
 }
-

@@ -42,12 +42,12 @@ class WebhookDeliveryRowMapper : RowMapper<WebhookDelivery> {
 }
 object WebhookMapper {
     private val json = Json { ignoreUnknownKeys = true }
-    fun prepareConfigInsert(config: WebhookConfig) = arrayOf(
+    fun prepareConfigInsert(config: WebhookConfig) = arrayOf<Any>(
         config.id, config.clientId, config.url, config.secret,
         json.encodeToString(config.events), config.isActive,
         config.maxRetries, config.retryDelay, config.createdAt, config.updatedAt
     )
-    fun prepareDeliveryInsert(delivery: WebhookDelivery) = arrayOf(
+    fun prepareDeliveryInsert(delivery: WebhookDelivery) = arrayOf<Any?>(
         delivery.id, delivery.webhookConfigId, delivery.bankslipId,
         delivery.eventType.name, delivery.payload, delivery.url,
         delivery.statusCode, delivery.responseBody, delivery.attemptNumber,

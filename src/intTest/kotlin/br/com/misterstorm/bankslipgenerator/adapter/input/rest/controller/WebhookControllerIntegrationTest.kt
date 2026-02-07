@@ -1,8 +1,8 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.controller
 
-import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
+import io.restassured.module.kotlin.extensions.Extract
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -94,14 +94,14 @@ class WebhookControllerIntegrationTest {
             "events" to listOf("BANKSLIP_REGISTERED")
         )
 
-        val webhookId = Given {
+        val webhookId: String = Given {
             contentType(ContentType.JSON)
             body(createRequest)
         } When {
             post("/api/webhooks")
-        } Then {
-            statusCode(201)
-        }.extract().path<String>("id")
+        } Extract {
+            path("id")
+        }
 
         // Act & Assert
         Given {
@@ -138,14 +138,14 @@ class WebhookControllerIntegrationTest {
             "events" to listOf("BANKSLIP_CANCELLED")
         )
 
-        val webhookId = Given {
+        val webhookId: String = Given {
             contentType(ContentType.JSON)
             body(createRequest)
         } When {
             post("/api/webhooks")
-        } Then {
-            statusCode(201)
-        }.extract().path<String>("id")
+        } Extract {
+            path("id")
+        }
 
         // Act & Assert - Delete
         Given {
@@ -176,14 +176,14 @@ class WebhookControllerIntegrationTest {
             "events" to listOf("BANKSLIP_CREATED")
         )
 
-        val webhookId = Given {
+        val webhookId: String = Given {
             contentType(ContentType.JSON)
             body(createRequest)
         } When {
             post("/api/webhooks")
-        } Then {
-            statusCode(201)
-        }.extract().path<String>("id")
+        } Extract {
+            path("id")
+        }
 
         // Act & Assert - Test delivery
         Given {

@@ -49,18 +49,17 @@ class IdempotencyInterceptor(
                 key
             )
 
-            if (cached != null) {
-                logger.info(
-                    "Returning cached response for idempotency key",
-                    "key" to key,
-                    "statusCode" to cached.statusCode
-                )
+            // If we reach here, a record was found
+            logger.info(
+                "Returning cached response for idempotency key",
+                "key" to key,
+                "statusCode" to cached.statusCode
+            )
 
-                response.status = cached.statusCode
-                response.contentType = "application/json"
-                response.writer.write(cached.responseBody)
-                return false
-            }
+            response.status = cached.statusCode
+            response.contentType = "application/json"
+            response.writer.write(cached.responseBody)
+            return false
         } catch (e: Exception) {
             // Key not found or expired, continue with request
             logger.debug("No cached response for idempotency key", "key" to key)

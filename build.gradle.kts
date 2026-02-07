@@ -133,6 +133,7 @@ dependencies {
     intTestImplementation("org.testcontainers:testcontainers:1.20.4")
     intTestImplementation("org.testcontainers:postgresql:1.20.4")
     intTestImplementation("org.testcontainers:localstack:1.20.4")
+    intTestImplementation("org.testcontainers:junit-jupiter:1.20.4")
     intTestImplementation("io.rest-assured:rest-assured:5.5.0")
     intTestImplementation("io.rest-assured:kotlin-extensions:5.5.0")
 }

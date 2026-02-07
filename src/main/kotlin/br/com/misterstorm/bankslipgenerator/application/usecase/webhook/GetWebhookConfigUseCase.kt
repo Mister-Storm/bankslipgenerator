@@ -4,7 +4,7 @@ import arrow.core.Either
 import br.com.misterstorm.bankslipgenerator.application.usecase.UseCase
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
-import br.com.misterstorm.bankslipgenerator.domain.port.WebhookConfigRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import java.util.*
 
@@ -12,7 +12,7 @@ import java.util.*
  * Use case for retrieving webhook configuration
  */
 class GetWebhookConfigUseCase(
-    private val webhookConfigRepository: WebhookConfigRepository,
+    private val webhookRepository: WebhookRepository,
     logger: Logger
 ) : UseCase<UUID, WebhookConfig>(logger) {
 

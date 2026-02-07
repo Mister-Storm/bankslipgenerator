@@ -3,7 +3,6 @@ package br.com.misterstorm.bankslipgenerator.infrastructure.interceptor
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
-import io.github.bucket4j.Refill
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.stereotype.Component
@@ -82,8 +81,10 @@ class RateLimitInterceptor(
 
     private fun createBucket(): Bucket {
         // 100 requests per minute with 10 tokens refilled every 6 seconds
-        val refill = Refill.intervally(10, Duration.ofSeconds(6))
-        val bandwidth = Bandwidth.classic(100, refill)
+        val bandwidth = Bandwidth.builder()
+            .capacity(100)
+            .refillIntervally(10, Duration.ofSeconds(6))
+            .build()
 
         return Bucket.builder()
             .addLimit(bandwidth)
@@ -94,8 +95,10 @@ class RateLimitInterceptor(
      * Create bucket with custom limits
      */
     fun createBucketWithLimits(capacity: Long, refillTokens: Long, refillPeriod: Duration): Bucket {
-        val refill = Refill.intervally(refillTokens, refillPeriod)
-        val bandwidth = Bandwidth.classic(capacity, refill)
+        val bandwidth = Bandwidth.builder()
+            .capacity(capacity)
+            .refillIntervally(refillTokens, refillPeriod)
+            .build()
 
         return Bucket.builder()
             .addLimit(bandwidth)
