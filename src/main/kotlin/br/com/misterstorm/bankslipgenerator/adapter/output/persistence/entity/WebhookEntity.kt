@@ -3,6 +3,8 @@ package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.util.*
@@ -62,7 +64,8 @@ fun WebhookConfigEntity.toDomain(): WebhookConfig {
 }
 
 fun WebhookConfig.toEntity(): WebhookConfigEntity {
-    val eventsJson = Json.encodeToString(this.events.map { it.name })
+    val eventNames: List<String> = this.events.map { it.name }
+    val eventsJson = Json.encodeToString(ListSerializer(String.serializer()), eventNames)
 
     return WebhookConfigEntity(
         id = this.id,

@@ -74,14 +74,15 @@ class WebhookRetryScheduler(
                         continue
                     }
 
-                    val config = webhookRepository.findConfigById(delivery.webhookConfigId)
-                        .getOrNull() ?: run {
-                            logger.warn(
-                                "Webhook config not found for delivery",
-                                "deliveryId" to delivery.id.toString()
-                            )
-                            continue
-                        }
+                    val configResult = webhookRepository.findConfigById(delivery.webhookConfigId)
+                    val config = configResult.getOrNull()
+                    if (config == null) {
+                        logger.warn(
+                            "Webhook config not found for delivery",
+                            "deliveryId" to delivery.id.toString()
+                        )
+                        continue
+                    }
 
                     // Parse payload back to map
                     val payload = parsePayload(delivery.payload)
