@@ -1,15 +1,25 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity
 
-import br.com.misterstorm.bankslipgenerator.domain.model.*
+import br.com.misterstorm.bankslipgenerator.domain.model.Address
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.Beneficiary
+import br.com.misterstorm.bankslipgenerator.domain.model.Discount
+import br.com.misterstorm.bankslipgenerator.domain.model.DiscountType
+import br.com.misterstorm.bankslipgenerator.domain.model.Fine
+import br.com.misterstorm.bankslipgenerator.domain.model.FineType
+import br.com.misterstorm.bankslipgenerator.domain.model.Interest
+import br.com.misterstorm.bankslipgenerator.domain.model.InterestType
+import br.com.misterstorm.bankslipgenerator.domain.model.Payer
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
- * Entity for bankslip persistence (JDBC - no JPA annotations)
+ * Entity for BankSlip persistence (JDBC - no JPA annotations)
  */
-data class BankslipEntity(
+data class BankSlipEntity(
     val id: UUID = UUID.randomUUID(),
     val bankCode: String,
     val documentNumber: String,
@@ -18,7 +28,7 @@ data class BankslipEntity(
     val amount: BigDecimal,
     val dueDate: LocalDate,
     val issueDate: LocalDate,
-    val status: BankslipStatus,
+    val status: BankSlipStatus,
 
     // Payer information
     val payerName: String,
@@ -70,8 +80,8 @@ data class BankslipEntity(
 )
 
 // Extension functions for mapping between domain and entity
-fun BankslipEntity.toDomain(): Bankslip {
-    return Bankslip(
+fun BankSlipEntity.toDomain(): BankSlip {
+    return BankSlip(
         id = this.id,
         bankCode = this.bankCode,
         documentNumber = this.documentNumber,
@@ -139,8 +149,8 @@ fun BankslipEntity.toDomain(): Bankslip {
     )
 }
 
-fun Bankslip.toEntity(): BankslipEntity {
-    return BankslipEntity(
+fun BankSlip.toEntity(): BankSlipEntity {
+    return BankSlipEntity(
         id = this.id,
         bankCode = this.bankCode,
         documentNumber = this.documentNumber,
@@ -186,4 +196,3 @@ fun Bankslip.toEntity(): BankslipEntity {
         deletedAt = this.deletedAt
     )
 }
-

@@ -4,8 +4,11 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.port.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.port.BankOnlineRegistrationService
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipStatusResponse
+import br.com.misterstorm.bankslipgenerator.domain.port.EncryptionService
+import br.com.misterstorm.bankslipgenerator.domain.port.RegistrationResponse
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.retry.annotation.Retry
@@ -33,11 +36,11 @@ class ItauOnlineAdapter(
 
     @CircuitBreaker(name = "itau", fallbackMethod = "registerFallback")
     @Retry(name = "itau")
-    override suspend fun register(bankslip: Bankslip): Either<DomainError, RegistrationResponse> {
+    override suspend fun register(bankSlip: BankSlip): Either<DomainError, RegistrationResponse> {
         return try {
             logger.info(
-                "Registering bankslip with Itaú",
-                "bankslipId" to bankslip.id.toString()
+                "Registering BankSlip with Itaú",
+                "bankSlipId" to bankSlip.id.toString()
             )
 
             val token = getOAuth2Token().fold({ return it.left() }, { it })
@@ -48,7 +51,7 @@ class ItauOnlineAdapter(
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build()
 
-            val request = buildRegistrationRequest(bankslip)
+            val request = buildRegistrationRequest(bankSlip)
 
             val response = client.post()
                 .uri("/boletos")
@@ -57,8 +60,8 @@ class ItauOnlineAdapter(
                 .awaitBody<Map<String, Any>>()
 
             logger.info(
-                "Bankslip registered successfully with Itaú",
-                "bankslipId" to bankslip.id.toString()
+                "BankSlip registered successfully with Itaú",
+                "bankSlipId" to bankSlip.id.toString()
             )
 
             RegistrationResponse(
@@ -68,13 +71,13 @@ class ItauOnlineAdapter(
             ).right()
 
         } catch (e: Exception) {
-            logger.error("Failed to register bankslip with Itaú", e)
+            logger.error("Failed to register BankSlip with Itaú", e)
             DomainError.UnexpectedError("Itaú registration failed: ${e.message}", e).left()
         }
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun registerFallback(bankslip: Bankslip, ex: Exception): Either<DomainError, RegistrationResponse> {
+    private fun registerFallback(bankSlip: BankSlip, ex: Exception): Either<DomainError, RegistrationResponse> {
         logger.warn("Circuit breaker activated for Itaú")
         return DomainError.UnexpectedError("Itaú service unavailable", ex).left()
     }
@@ -88,30 +91,30 @@ class ItauOnlineAdapter(
         }
     }
 
-    private fun buildRegistrationRequest(bankslip: Bankslip): Map<String, Any> {
+    private fun buildRegistrationRequest(bankSlip: BankSlip): Map<String, Any> {
         return mapOf(
-            "data_vencimento" to bankslip.dueDate.toString(),
-            "valor_titulo" to bankslip.amount.toString(),
+            "data_vencimento" to bankSlip.dueDate.toString(),
+            "valor_titulo" to bankSlip.amount.toString(),
             "tipo_carteira" to "109",
             "dados_sacado" to mapOf(
-                "tipo_pessoa" to if (bankslip.payer.documentNumber.length > 11) "J" else "F",
-                "cpf_cnpj" to bankslip.payer.documentNumber.replace("[^0-9]".toRegex(), ""),
-                "nome" to bankslip.payer.name,
+                "tipo_pessoa" to if (bankSlip.payer.documentNumber.length > 11) "J" else "F",
+                "cpf_cnpj" to bankSlip.payer.documentNumber.replace("[^0-9]".toRegex(), ""),
+                "nome" to bankSlip.payer.name,
                 "endereco" to mapOf(
-                    "logradouro" to bankslip.payer.address.street,
-                    "numero" to bankslip.payer.address.number,
-                    "bairro" to bankslip.payer.address.neighborhood,
-                    "cidade" to bankslip.payer.address.city,
-                    "uf" to bankslip.payer.address.state,
-                    "cep" to bankslip.payer.address.zipCode.replace("-", "")
+                    "logradouro" to bankSlip.payer.address.street,
+                    "numero" to bankSlip.payer.address.number,
+                    "bairro" to bankSlip.payer.address.neighborhood,
+                    "cidade" to bankSlip.payer.address.city,
+                    "uf" to bankSlip.payer.address.state,
+                    "cep" to bankSlip.payer.address.zipCode.replace("-", "")
                 )
             )
         )
     }
 
-    override suspend fun cancel(bankslip: Bankslip): Either<DomainError, Unit> {
+    override suspend fun cancel(bankSlip: BankSlip): Either<DomainError, Unit> {
         return try {
-            logger.info("Cancelling bankslip with Itaú")
+            logger.info("Cancelling BankSlip with Itaú")
             // Implement cancellation logic
             Unit.right()
         } catch (e: Exception) {
@@ -119,10 +122,9 @@ class ItauOnlineAdapter(
         }
     }
 
-    override suspend fun query(bankslip: Bankslip): Either<DomainError, BankslipStatusResponse> {
-        return BankslipStatusResponse("REGISTERED").right()
+    override suspend fun query(bankSlip: BankSlip): Either<DomainError, BankSlipStatusResponse> {
+        return BankSlipStatusResponse("REGISTERED").right()
     }
 
     override fun supports(bankCode: String): Boolean = bankCode == this.bankCode
 }
-

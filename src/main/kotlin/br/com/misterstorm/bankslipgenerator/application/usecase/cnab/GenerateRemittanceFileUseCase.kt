@@ -4,11 +4,11 @@ import arrow.core.Either
 import arrow.core.left
 import br.com.misterstorm.bankslipgenerator.application.usecase.UseCase
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.BankslipStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFile
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
 import br.com.misterstorm.bankslipgenerator.domain.port.BankConfigurationRepository
-import br.com.misterstorm.bankslipgenerator.domain.port.BankslipRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipRepository
 import br.com.misterstorm.bankslipgenerator.domain.port.CnabFileRepository
 import br.com.misterstorm.bankslipgenerator.domain.port.CnabService
 import br.com.misterstorm.bankslipgenerator.domain.port.FileStorageService
@@ -19,7 +19,7 @@ import java.time.LocalDate
  * Use case for generating CNAB remittance file
  */
 class GenerateRemittanceFileUseCase(
-    private val bankslipRepository: BankslipRepository,
+    private val bankSlipRepository: BankSlipRepository,
     private val bankConfigurationRepository: BankConfigurationRepository,
     private val cnabService: CnabService,
     private val cnabFileRepository: CnabFileRepository,
@@ -35,24 +35,24 @@ class GenerateRemittanceFileUseCase(
     )
 
     override suspend fun execute(input: Input): Either<DomainError, CnabFile> {
-        // Validate bank configuration
-        val bankConfig = bankConfigurationRepository.findByBankCode(input.bankCode)
+        // Validate bank configuration exists
+        bankConfigurationRepository.findByBankCode(input.bankCode)
             .fold({ return it.left() }, { it })
 
-        // Get bankslips to be registered
-        val bankslips = bankslipRepository.findByDueDateBetween(input.startDate, input.endDate)
+        // Get bankSlips to be registered
+        val bankSlips = bankSlipRepository.findByDueDateBetween(input.startDate, input.endDate)
             .fold({ return it.left() }, { it })
-            .filter { it.status == BankslipStatus.CREATED && !it.isDeleted() }
+            .filter { it.status == BankSlipStatus.CREATED && !it.isDeleted() }
 
-        if (bankslips.isEmpty()) {
+        if (bankSlips.isEmpty()) {
             return DomainError.ValidationFailed(
-                violations = listOf("No bankslips found for the given period")
+                violations = listOf("No bankSlips found for the given period")
             ).left()
         }
 
         // Generate CNAB file
         val cnabFile = cnabService.generateRemittanceFile(
-            bankslips = bankslips,
+            bankSlips = bankSlips,
             bankCode = input.bankCode,
             version = input.version
         ).fold({ return it.left() }, { it })

@@ -1,11 +1,15 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.controller
 
-import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.*
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.CreateBankConfigurationRequest
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.toDomain
 import br.com.misterstorm.bankslipgenerator.application.usecase.bankconfiguration.CreateBankConfigurationUseCase
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import java.util.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 /**
  * REST controller for bank configuration operations
@@ -17,6 +21,7 @@ class BankConfigurationController(
 ) {
 
     @PostMapping
+    @Suppress("UNUSED_PARAMETER")
     suspend fun createBankConfiguration(
         @RequestBody request: CreateBankConfigurationRequest,
         @RequestHeader("API-Version", defaultValue = "v1") apiVersion: String

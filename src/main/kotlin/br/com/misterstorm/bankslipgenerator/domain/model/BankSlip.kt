@@ -3,12 +3,12 @@ package br.com.misterstorm.bankslipgenerator.domain.model
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
- * Bankslip Status representing its lifecycle
+ * BankSlip Status representing its lifecycle
  */
-enum class BankslipStatus {
+enum class BankSlipStatus {
     CREATED,
     REGISTERED,
     PAID,
@@ -17,9 +17,9 @@ enum class BankslipStatus {
 }
 
 /**
- * Bankslip domain entity
+ * BankSlip domain entity
  */
-data class Bankslip(
+data class BankSlip(
     val id: UUID,
     val bankCode: String,
     val documentNumber: String, // Nosso Número
@@ -28,7 +28,7 @@ data class Bankslip(
     val amount: BigDecimal,
     val dueDate: LocalDate,
     val issueDate: LocalDate,
-    val status: BankslipStatus,
+    val status: BankSlipStatus,
     val payer: Payer,
     val beneficiary: Beneficiary,
     val instructions: List<String> = emptyList(),
@@ -43,25 +43,25 @@ data class Bankslip(
 ) {
     fun isDeleted(): Boolean = deletedAt != null
 
-    fun canTransitionTo(newStatus: BankslipStatus): Boolean {
+    fun canTransitionTo(newStatus: BankSlipStatus): Boolean {
         return when (status) {
-            BankslipStatus.CREATED -> newStatus in listOf(
-                BankslipStatus.REGISTERED,
-                BankslipStatus.CANCELLED,
-                BankslipStatus.EXPIRED
+            BankSlipStatus.CREATED -> newStatus in listOf(
+                BankSlipStatus.REGISTERED,
+                BankSlipStatus.CANCELLED,
+                BankSlipStatus.EXPIRED
             )
-            BankslipStatus.REGISTERED -> newStatus in listOf(
-                BankslipStatus.PAID,
-                BankslipStatus.CANCELLED,
-                BankslipStatus.EXPIRED
+            BankSlipStatus.REGISTERED -> newStatus in listOf(
+                BankSlipStatus.PAID,
+                BankSlipStatus.CANCELLED,
+                BankSlipStatus.EXPIRED
             )
-            BankslipStatus.PAID -> false
-            BankslipStatus.CANCELLED -> false
-            BankslipStatus.EXPIRED -> newStatus == BankslipStatus.PAID
+            BankSlipStatus.PAID -> false
+            BankSlipStatus.CANCELLED -> false
+            BankSlipStatus.EXPIRED -> newStatus == BankSlipStatus.PAID
         }
     }
 
-    fun isExpired(): Boolean = LocalDate.now().isAfter(dueDate) && status != BankslipStatus.PAID
+    fun isExpired(): Boolean = LocalDate.now().isAfter(dueDate) && status != BankSlipStatus.PAID
 }
 
 /**

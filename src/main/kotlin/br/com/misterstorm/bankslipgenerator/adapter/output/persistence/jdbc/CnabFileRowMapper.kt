@@ -7,7 +7,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Component
 import java.sql.ResultSet
-import java.util.*
+import java.util.UUID
 
 @Component
 class CnabFileRowMapper : RowMapper<CnabFileEntity> {

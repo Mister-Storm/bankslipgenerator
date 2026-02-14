@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 @Repository
 class JdbcWebhookRepository(

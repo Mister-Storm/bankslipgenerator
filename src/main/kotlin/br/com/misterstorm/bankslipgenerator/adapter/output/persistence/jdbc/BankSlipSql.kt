@@ -1,6 +1,6 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc
 
-object BankslipSql {
+object BankSlipSql {
     const val INSERT = """
         INSERT INTO bankslips (
             id, bank_code, document_number, barcode, digitable_line, amount, due_date, issue_date, status,

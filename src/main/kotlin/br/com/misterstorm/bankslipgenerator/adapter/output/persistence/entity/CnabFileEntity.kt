@@ -8,7 +8,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Entity for CNAB file persistence (JDBC - no JPA annotations)

@@ -6,7 +6,7 @@ import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
-import java.util.*
+import java.util.UUID
 
 /**
  * Use case for retrieving webhook configuration

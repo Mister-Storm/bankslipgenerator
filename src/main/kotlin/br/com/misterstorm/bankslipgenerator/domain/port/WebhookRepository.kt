@@ -3,7 +3,7 @@ import arrow.core.Either
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
-import java.util.*
+import java.util.UUID
 
 interface WebhookRepository {
     suspend fun saveConfig(config: WebhookConfig): Either<DomainError, WebhookConfig>

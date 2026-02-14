@@ -4,8 +4,10 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.port.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.port.BankOnlineRegistrationService
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipStatusResponse
+import br.com.misterstorm.bankslipgenerator.domain.port.RegistrationResponse
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -26,13 +28,13 @@ class SantanderOnlineAdapter(
 
     private val bankCode = "033"
 
-    override suspend fun register(bankslip: Bankslip): Either<DomainError, RegistrationResponse> {
+    override suspend fun register(bankSlip: BankSlip): Either<DomainError, RegistrationResponse> {
         return try {
             if (apiKey == null) {
                 return DomainError.UnexpectedError("Santander API key not configured").left()
             }
 
-            logger.info("Registering bankslip with Santander", "bankslipId" to bankslip.id.toString())
+            logger.info("Registering BankSlip with Santander", "bankSlipId" to bankSlip.id.toString())
 
             val client = webClientBuilder
                 .baseUrl(apiUrl)
@@ -41,28 +43,28 @@ class SantanderOnlineAdapter(
                 .build()
 
             val request = mapOf(
-                "nsu" to bankslip.documentNumber,
-                "valor" to bankslip.amount.toString(),
-                "data_vencimento" to bankslip.dueDate.toString(),
+                "nsu" to bankSlip.documentNumber,
+                "valor" to bankSlip.amount.toString(),
+                "data_vencimento" to bankSlip.dueDate.toString(),
                 "pagador" to mapOf(
-                    "nome" to bankslip.payer.name,
+                    "nome" to bankSlip.payer.name,
                     "documento" to mapOf(
-                        "tipo" to if (bankslip.payer.documentNumber.length > 11) "CNPJ" else "CPF",
-                        "numero" to bankslip.payer.documentNumber
+                        "tipo" to if (bankSlip.payer.documentNumber.length > 11) "CNPJ" else "CPF",
+                        "numero" to bankSlip.payer.documentNumber
                     ),
                     "endereco" to mapOf(
-                        "logradouro" to bankslip.payer.address.street,
-                        "numero" to bankslip.payer.address.number,
-                        "bairro" to bankslip.payer.address.neighborhood,
-                        "cidade" to bankslip.payer.address.city,
-                        "uf" to bankslip.payer.address.state,
-                        "cep" to bankslip.payer.address.zipCode
+                        "logradouro" to bankSlip.payer.address.street,
+                        "numero" to bankSlip.payer.address.number,
+                        "bairro" to bankSlip.payer.address.neighborhood,
+                        "cidade" to bankSlip.payer.address.city,
+                        "uf" to bankSlip.payer.address.state,
+                        "cep" to bankSlip.payer.address.zipCode
                     )
                 ),
                 "beneficiario" to mapOf(
-                    "documento" to bankslip.beneficiary.documentNumber,
-                    "agencia" to bankslip.beneficiary.agencyNumber,
-                    "conta" to bankslip.beneficiary.accountNumber
+                    "documento" to bankSlip.beneficiary.documentNumber,
+                    "agencia" to bankSlip.beneficiary.agencyNumber,
+                    "conta" to bankSlip.beneficiary.accountNumber
                 )
             )
 
@@ -85,11 +87,10 @@ class SantanderOnlineAdapter(
         }
     }
 
-    override suspend fun cancel(bankslip: Bankslip): Either<DomainError, Unit> = Unit.right()
+    override suspend fun cancel(bankSlip: BankSlip): Either<DomainError, Unit> = Unit.right()
 
-    override suspend fun query(bankslip: Bankslip): Either<DomainError, BankslipStatusResponse> =
-        BankslipStatusResponse("REGISTERED").right()
+    override suspend fun query(bankSlip: BankSlip): Either<DomainError, BankSlipStatusResponse> =
+        BankSlipStatusResponse("REGISTERED").right()
 
     override fun supports(bankCode: String): Boolean = bankCode == this.bankCode
 }
-

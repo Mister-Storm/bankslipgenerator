@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.builtins.ListSerializer
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Entity for bank configuration persistence (JDBC - no JPA annotations)

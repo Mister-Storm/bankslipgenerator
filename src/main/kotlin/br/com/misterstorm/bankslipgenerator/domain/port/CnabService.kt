@@ -2,7 +2,7 @@ package br.com.misterstorm.bankslipgenerator.domain.port
 
 import arrow.core.Either
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFile
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
 
@@ -11,7 +11,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
  */
 interface CnabService {
     suspend fun generateRemittanceFile(
-        bankslips: List<Bankslip>,
+        bankSlips: List<BankSlip>,
         bankCode: String,
         version: CnabVersion
     ): Either<DomainError, CnabFile>
@@ -22,4 +22,3 @@ interface CnabService {
         version: CnabVersion
     ): Either<DomainError, CnabFile>
 }
-

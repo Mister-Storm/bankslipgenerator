@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Component
 import java.sql.ResultSet
-import java.util.*
+import java.util.UUID
 
 @Component
 class BankConfigurationRowMapper : RowMapper<BankConfigurationEntity> {

@@ -3,14 +3,15 @@ package br.com.misterstorm.bankslipgenerator.adapter.output.persistence
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.*
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.toDomain
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.toEntity
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.JdbcWebhookRepository
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
 import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.UUID
 
 @Component
 class WebhookRepositoryAdapter(
@@ -87,4 +88,3 @@ class WebhookRepositoryAdapter(
         }
     }
 }
-

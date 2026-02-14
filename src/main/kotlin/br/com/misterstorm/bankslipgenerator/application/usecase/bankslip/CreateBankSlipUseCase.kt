@@ -5,26 +5,33 @@ import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.application.usecase.UseCase
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.event.BankslipEvent
+import br.com.misterstorm.bankslipgenerator.domain.event.BankSlipEvent
 import br.com.misterstorm.bankslipgenerator.domain.event.DomainEventPublisher
-import br.com.misterstorm.bankslipgenerator.domain.model.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.Beneficiary
+import br.com.misterstorm.bankslipgenerator.domain.model.Discount
+import br.com.misterstorm.bankslipgenerator.domain.model.Fine
+import br.com.misterstorm.bankslipgenerator.domain.model.Interest
+import br.com.misterstorm.bankslipgenerator.domain.model.Payer
 import br.com.misterstorm.bankslipgenerator.domain.port.BankConfigurationRepository
-import br.com.misterstorm.bankslipgenerator.domain.port.BankslipRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
- * Use case for creating a new bankslip
+ * Use case for creating a new BankSlip
  */
-class CreateBankslipUseCase(
-    private val bankslipRepository: BankslipRepository,
+class CreateBankSlipUseCase(
+    private val bankSlipRepository: BankSlipRepository,
     private val bankConfigurationRepository: BankConfigurationRepository,
     private val eventPublisher: DomainEventPublisher,
     logger: Logger
-) : UseCase<CreateBankslipUseCase.Input, Bankslip>(logger) {
+) : UseCase<CreateBankSlipUseCase.Input, BankSlip>(logger) {
 
     data class Input(
         val bankCode: String,
@@ -38,7 +45,7 @@ class CreateBankslipUseCase(
         val interest: Interest? = null
     )
 
-    override suspend fun execute(input: Input): Either<DomainError, Bankslip> {
+    override suspend fun execute(input: Input): Either<DomainError, BankSlip> {
         // Validate bank configuration exists
         val bankConfig = bankConfigurationRepository.findByBankCode(input.bankCode).fold(
             { error -> return error.left() },
@@ -62,9 +69,9 @@ class CreateBankslipUseCase(
         val barcode = generateBarcode(input, documentNumber)
         val digitableLine = generateDigitableLine(barcode)
 
-        // Create bankslip
+        // Create bankSlip
         val now = LocalDateTime.now()
-        val bankslip = Bankslip(
+        val bankSlip = BankSlip(
             id = UUID.randomUUID(),
             bankCode = input.bankCode,
             documentNumber = documentNumber,
@@ -73,7 +80,7 @@ class CreateBankslipUseCase(
             amount = input.amount,
             dueDate = input.dueDate,
             issueDate = LocalDate.now(),
-            status = BankslipStatus.CREATED,
+            status = BankSlipStatus.CREATED,
             payer = input.payer,
             beneficiary = input.beneficiary,
             instructions = input.instructions,
@@ -84,15 +91,15 @@ class CreateBankslipUseCase(
             updatedAt = now
         )
 
-        return bankslipRepository.save(bankslip)
-            .onRight { savedBankslip ->
+        return bankSlipRepository.save(bankSlip)
+            .onRight { savedBankSlip ->
                 // Publish domain event
-                val event = BankslipEvent.BankslipCreated(
-                    aggregateId = savedBankslip.id,
-                    bankCode = savedBankslip.bankCode,
-                    amount = savedBankslip.amount.toString(),
-                    dueDate = savedBankslip.dueDate.toString(),
-                    payerDocument = savedBankslip.payer.documentNumber
+                val event = BankSlipEvent.BankSlipCreated(
+                    aggregateId = savedBankSlip.id,
+                    bankCode = savedBankSlip.bankCode,
+                    amount = savedBankSlip.amount.toString(),
+                    dueDate = savedBankSlip.dueDate.toString(),
+                    payerDocument = savedBankSlip.payer.documentNumber
                 )
                 eventPublisher.publish(event)
             }
@@ -124,7 +131,7 @@ class CreateBankslipUseCase(
 
     private fun calculateDueDateFactor(dueDate: LocalDate): String {
         val baseDate = LocalDate.of(1997, 10, 7)
-        val days = java.time.temporal.ChronoUnit.DAYS.between(baseDate, dueDate)
+        val days = ChronoUnit.DAYS.between(baseDate, dueDate)
         return days.toString().padStart(4, '0')
     }
 
@@ -142,4 +149,3 @@ class CreateBankslipUseCase(
         return "$field1.$field2.$field3 $field4 $field5"
     }
 }
-

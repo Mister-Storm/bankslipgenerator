@@ -4,13 +4,14 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.port.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.port.BankOnlineRegistrationService
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipStatusResponse
+import br.com.misterstorm.bankslipgenerator.domain.port.EncryptionService
+import br.com.misterstorm.bankslipgenerator.domain.port.RegistrationResponse
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.retry.annotation.Retry
-import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -37,12 +38,12 @@ class BancoDoBrasilOnlineAdapter(
 
     @CircuitBreaker(name = "bancoDoBrasil", fallbackMethod = "registerFallback")
     @Retry(name = "bancoDoBrasil")
-    override suspend fun register(bankslip: Bankslip): Either<DomainError, RegistrationResponse> {
+    override suspend fun register(bankSlip: BankSlip): Either<DomainError, RegistrationResponse> {
         return try {
             logger.info(
-                "Registering bankslip with Banco do Brasil",
-                "bankslipId" to bankslip.id.toString(),
-                "documentNumber" to bankslip.documentNumber
+                "Registering BankSlip with Banco do Brasil",
+                "bankSlipId" to bankSlip.id.toString(),
+                "documentNumber" to bankSlip.documentNumber
             )
 
             // Get OAuth2 token
@@ -54,7 +55,7 @@ class BancoDoBrasilOnlineAdapter(
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build()
 
-            val request = buildRegistrationRequest(bankslip)
+            val request = buildRegistrationRequest(bankSlip)
 
             val response = client.post()
                 .uri("/boletos")
@@ -63,8 +64,8 @@ class BancoDoBrasilOnlineAdapter(
                 .awaitBody<Map<String, Any>>()
 
             logger.info(
-                "Bankslip registered successfully with Banco do Brasil",
-                "bankslipId" to bankslip.id.toString(),
+                "BankSlip registered successfully with Banco do Brasil",
+                "bankSlipId" to bankSlip.id.toString(),
                 "numeroTitulo" to response["numero"].toString()
             )
 
@@ -76,19 +77,19 @@ class BancoDoBrasilOnlineAdapter(
 
         } catch (e: Exception) {
             logger.error(
-                "Failed to register bankslip with Banco do Brasil",
+                "Failed to register BankSlip with Banco do Brasil",
                 e,
-                "bankslipId" to bankslip.id.toString()
+                "bankSlipId" to bankSlip.id.toString()
             )
             DomainError.UnexpectedError("BB registration failed: ${e.message}", e).left()
         }
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun registerFallback(bankslip: Bankslip, ex: Exception): Either<DomainError, RegistrationResponse> {
+    private fun registerFallback(bankSlip: BankSlip, ex: Exception): Either<DomainError, RegistrationResponse> {
         logger.warn(
             "Circuit breaker activated for Banco do Brasil",
-            "bankslipId" to bankslip.id.toString()
+            "bankSlipId" to bankSlip.id.toString()
         )
         return DomainError.UnexpectedError(
             "BB service unavailable. Please try CNAB registration or try again later.",
@@ -108,16 +109,16 @@ class BancoDoBrasilOnlineAdapter(
         }
     }
 
-    private fun buildRegistrationRequest(bankslip: Bankslip): Map<String, Any> {
+    private fun buildRegistrationRequest(bankSlip: BankSlip): Map<String, Any> {
         return mapOf(
             "numeroConvenio" to "SEU_CONVENIO", // Should come from credentials
             "numeroCarteira" to "17",
             "numeroVariacaoCarteira" to "019",
             "codigoModalidade" to 1,
-            "dataEmissao" to bankslip.issueDate.format(dateFormatter),
-            "dataVencimento" to bankslip.dueDate.format(dateFormatter),
-            "valorOriginal" to bankslip.amount.toString(),
-            "valorAbatimento" to (bankslip.discount?.value?.toString() ?: "0.00"),
+            "dataEmissao" to bankSlip.issueDate.format(dateFormatter),
+            "dataVencimento" to bankSlip.dueDate.format(dateFormatter),
+            "valorOriginal" to bankSlip.amount.toString(),
+            "valorAbatimento" to (bankSlip.discount?.value?.toString() ?: "0.00"),
             "quantidadeDiasProtesto" to 0,
             "quantidadeDiasNegativacao" to 0,
             "orgaoNegativador" to 0,
@@ -127,25 +128,25 @@ class BancoDoBrasilOnlineAdapter(
             "codigoTipoTitulo" to 2,
             "descricaoTipoTitulo" to "DM",
             "indicadorPermissaoRecebimentoParcial" to "N",
-            "numeroTituloBeneficiario" to bankslip.documentNumber,
+            "numeroTituloBeneficiario" to bankSlip.documentNumber,
             "pagador" to mapOf(
-                "tipoInscricao" to if (bankslip.payer.documentNumber.length > 11) 2 else 1,
-                "numeroInscricao" to bankslip.payer.documentNumber.replace("[^0-9]".toRegex(), ""),
-                "nome" to bankslip.payer.name,
-                "endereco" to bankslip.payer.address.street,
-                "cep" to bankslip.payer.address.zipCode.replace("-", ""),
-                "cidade" to bankslip.payer.address.city,
-                "bairro" to bankslip.payer.address.neighborhood,
-                "uf" to bankslip.payer.address.state
+                "tipoInscricao" to if (bankSlip.payer.documentNumber.length > 11) 2 else 1,
+                "numeroInscricao" to bankSlip.payer.documentNumber.replace("[^0-9]".toRegex(), ""),
+                "nome" to bankSlip.payer.name,
+                "endereco" to bankSlip.payer.address.street,
+                "cep" to bankSlip.payer.address.zipCode.replace("-", ""),
+                "cidade" to bankSlip.payer.address.city,
+                "bairro" to bankSlip.payer.address.neighborhood,
+                "uf" to bankSlip.payer.address.state
             )
         )
     }
 
-    override suspend fun cancel(bankslip: Bankslip): Either<DomainError, Unit> {
+    override suspend fun cancel(bankSlip: BankSlip): Either<DomainError, Unit> {
         return try {
             logger.info(
-                "Cancelling bankslip with Banco do Brasil",
-                "bankslipId" to bankslip.id.toString()
+                "Cancelling BankSlip with Banco do Brasil",
+                "bankSlipId" to bankSlip.id.toString()
             )
 
             val token = getOAuth2Token().fold({ return it.left() }, { it })
@@ -156,22 +157,22 @@ class BancoDoBrasilOnlineAdapter(
                 .build()
 
             client.post()
-                .uri("/boletos/{id}/baixar", bankslip.documentNumber)
+                .uri("/boletos/{id}/baixar", bankSlip.documentNumber)
                 .retrieve()
                 .awaitBody<Map<String, Any>>()
 
-            logger.info("Bankslip cancelled successfully with BB")
+            logger.info("BankSlip cancelled successfully with BB")
             Unit.right()
 
         } catch (e: Exception) {
-            logger.error("Failed to cancel bankslip with BB", e)
+            logger.error("Failed to cancel BankSlip with BB", e)
             DomainError.UnexpectedError("BB cancellation failed: ${e.message}", e).left()
         }
     }
 
-    override suspend fun query(bankslip: Bankslip): Either<DomainError, BankslipStatusResponse> {
+    override suspend fun query(bankSlip: BankSlip): Either<DomainError, BankSlipStatusResponse> {
         return try {
-            logger.debug("Querying bankslip status with BB")
+            logger.debug("Querying BankSlip status with BB")
 
             val token = getOAuth2Token().fold({ return it.left() }, { it })
 
@@ -181,18 +182,18 @@ class BancoDoBrasilOnlineAdapter(
                 .build()
 
             val response = client.get()
-                .uri("/boletos/{id}", bankslip.documentNumber)
+                .uri("/boletos/{id}", bankSlip.documentNumber)
                 .retrieve()
                 .awaitBody<Map<String, Any>>()
 
-            BankslipStatusResponse(
+            BankSlipStatusResponse(
                 status = response["situacao"] as? String ?: "UNKNOWN",
                 registrationId = response["numero"] as? String,
                 lastUpdate = response["dataAtualizacao"] as? String
             ).right()
 
         } catch (e: Exception) {
-            logger.error("Failed to query bankslip status with BB", e)
+            logger.error("Failed to query BankSlip status with BB", e)
             DomainError.UnexpectedError("BB query failed: ${e.message}", e).left()
         }
     }

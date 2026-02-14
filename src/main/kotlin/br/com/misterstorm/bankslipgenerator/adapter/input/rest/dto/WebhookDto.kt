@@ -4,7 +4,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Request DTO for creating webhook configuration

@@ -36,7 +36,7 @@ abstract class UseCase<T, U>(
                             "details" to error.details
                         )
                     },
-                    { success ->
+                    { _ ->
                         logger.info(
                             "Use case execution succeeded",
                             "useCase" to this::class.simpleName.orEmpty()

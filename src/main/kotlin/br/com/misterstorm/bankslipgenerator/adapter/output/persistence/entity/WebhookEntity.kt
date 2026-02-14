@@ -7,7 +7,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Entity for webhook configuration persistence (JDBC - no JPA annotations)

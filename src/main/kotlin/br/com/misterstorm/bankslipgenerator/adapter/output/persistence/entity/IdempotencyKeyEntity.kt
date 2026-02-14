@@ -1,7 +1,7 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity
 
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Entity for idempotency key persistence (JDBC - no JPA annotations)

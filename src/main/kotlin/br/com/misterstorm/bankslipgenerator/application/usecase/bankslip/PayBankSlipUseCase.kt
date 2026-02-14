@@ -4,65 +4,65 @@ import arrow.core.Either
 import arrow.core.left
 import br.com.misterstorm.bankslipgenerator.application.usecase.UseCase
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.event.BankslipEvent
+import br.com.misterstorm.bankslipgenerator.domain.event.BankSlipEvent
 import br.com.misterstorm.bankslipgenerator.domain.event.DomainEventPublisher
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.model.BankslipStatus
-import br.com.misterstorm.bankslipgenerator.domain.port.BankslipRepository
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
- * Use case for registering a payment for a bankslip
+ * Use case for registering a payment for a BankSlip
  */
-class PayBankslipUseCase(
-    private val bankslipRepository: BankslipRepository,
+class PayBankSlipUseCase(
+    private val bankSlipRepository: BankSlipRepository,
     private val eventPublisher: DomainEventPublisher,
     logger: Logger
-) : UseCase<PayBankslipUseCase.Input, Bankslip>(logger) {
+) : UseCase<PayBankSlipUseCase.Input, BankSlip>(logger) {
 
     data class Input(
-        val bankslipId: UUID,
+        val bankSlipId: UUID,
         val paymentDate: LocalDateTime,
         val paidAmount: BigDecimal
     )
 
-    override suspend fun execute(input: Input): Either<DomainError, Bankslip> {
-        val bankslip = bankslipRepository.findById(input.bankslipId)
+    override suspend fun execute(input: Input): Either<DomainError, BankSlip> {
+        val bankSlip = bankSlipRepository.findById(input.bankSlipId)
             .fold({ return it.left() }, { it })
 
         // Check if already paid
-        if (bankslip.status == BankslipStatus.PAID) {
-            return DomainError.BankslipAlreadyPaid(input.bankslipId.toString()).left()
+        if (bankSlip.status == BankSlipStatus.PAID) {
+            return DomainError.BankSlipAlreadyPaid(input.bankSlipId.toString()).left()
         }
 
         // Check if cancelled
-        if (bankslip.status == BankslipStatus.CANCELLED) {
-            return DomainError.BankslipAlreadyCancelled(input.bankslipId.toString()).left()
+        if (bankSlip.status == BankSlipStatus.CANCELLED) {
+            return DomainError.BankSlipAlreadyCancelled(input.bankSlipId.toString()).left()
         }
 
         // Validate status transition
-        if (!bankslip.canTransitionTo(BankslipStatus.PAID)) {
+        if (!bankSlip.canTransitionTo(BankSlipStatus.PAID)) {
             return DomainError.InvalidStatusTransition(
-                from = bankslip.status.name,
-                to = BankslipStatus.PAID.name
+                from = bankSlip.status.name,
+                to = BankSlipStatus.PAID.name
             ).left()
         }
 
-        // Update bankslip
-        val updatedBankslip = bankslip.copy(
-            status = BankslipStatus.PAID,
+        // Update bankSlip
+        val updatedBankSlip = bankSlip.copy(
+            status = BankSlipStatus.PAID,
             paymentDate = input.paymentDate,
             paidAmount = input.paidAmount,
             updatedAt = LocalDateTime.now()
         )
 
-        return bankslipRepository.update(updatedBankslip)
+        return bankSlipRepository.update(updatedBankSlip)
             .onRight { paid ->
                 // Publish domain event
-                val event = BankslipEvent.BankslipPaid(
+                val event = BankSlipEvent.BankSlipPaid(
                     aggregateId = paid.id,
                     paidAmount = paid.paidAmount.toString(),
                     paymentDate = paid.paymentDate.toString()
@@ -71,4 +71,3 @@ class PayBankslipUseCase(
             }
     }
 }
-

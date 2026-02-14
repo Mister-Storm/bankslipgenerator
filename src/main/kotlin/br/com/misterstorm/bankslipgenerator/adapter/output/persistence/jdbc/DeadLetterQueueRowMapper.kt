@@ -3,7 +3,7 @@ package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.DeadLetterQueueEntity
 import java.sql.ResultSet
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 class DeadLetterQueueRowMapper : org.springframework.jdbc.core.RowMapper<DeadLetterQueueEntity> {
     override fun mapRow(rs: ResultSet, rowNum: Int): DeadLetterQueueEntity {

@@ -2,7 +2,7 @@ package br.com.misterstorm.bankslipgenerator.domain.model
 
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Bank configuration entity

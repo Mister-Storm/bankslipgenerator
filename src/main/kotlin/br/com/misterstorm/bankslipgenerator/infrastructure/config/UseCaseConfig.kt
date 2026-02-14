@@ -1,12 +1,29 @@
 package br.com.misterstorm.bankslipgenerator.infrastructure.config
 
-import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.*
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.CreateBankSlipUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.DeleteBankSlipUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.GenerateBankSlipPdfUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.GetBankSlipUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.PayBankSlipUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.RegisterBankSlipOnlineUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.bankslip.RegisterBankSlipUseCase
 import br.com.misterstorm.bankslipgenerator.application.usecase.bankconfiguration.CreateBankConfigurationUseCase
 import br.com.misterstorm.bankslipgenerator.application.usecase.cnab.GenerateRemittanceFileUseCase
 import br.com.misterstorm.bankslipgenerator.application.usecase.cnab.ProcessReturnFileUseCase
-import br.com.misterstorm.bankslipgenerator.application.usecase.webhook.*
+import br.com.misterstorm.bankslipgenerator.application.usecase.webhook.CreateWebhookConfigUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.webhook.DeleteWebhookConfigUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.webhook.GetWebhookConfigUseCase
+import br.com.misterstorm.bankslipgenerator.application.usecase.webhook.TestWebhookUseCase
+import br.com.misterstorm.bankslipgenerator.adapter.output.webhook.WebhookDeliveryService
 import br.com.misterstorm.bankslipgenerator.domain.event.DomainEventPublisher
-import br.com.misterstorm.bankslipgenerator.domain.port.*
+import br.com.misterstorm.bankslipgenerator.domain.port.BankConfigurationRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.BankOnlineRegistrationService
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.CnabFileRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.CnabService
+import br.com.misterstorm.bankslipgenerator.domain.port.FileStorageService
+import br.com.misterstorm.bankslipgenerator.domain.port.PdfGeneratorService
+import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.StructuredLogger
 import org.springframework.context.annotation.Bean
@@ -19,62 +36,62 @@ import org.springframework.context.annotation.Configuration
 class UseCaseConfig {
 
     @Bean
-    fun logger(): Logger = StructuredLogger("BankslipGenerator")
+    fun logger(): Logger = StructuredLogger("BankSlipGenerator")
 
-    // Bankslip Use Cases
+    // BankSlip Use Cases
     @Bean
-    fun createBankslipUseCase(
-        bankslipRepository: BankslipRepository,
+    fun createBankSlipUseCase(
+        bankSlipRepository: BankSlipRepository,
         bankConfigurationRepository: BankConfigurationRepository,
         eventPublisher: DomainEventPublisher,
         logger: Logger
-    ): CreateBankslipUseCase {
-        return CreateBankslipUseCase(bankslipRepository, bankConfigurationRepository, eventPublisher, logger)
+    ): CreateBankSlipUseCase {
+        return CreateBankSlipUseCase(bankSlipRepository, bankConfigurationRepository, eventPublisher, logger)
     }
 
     @Bean
-    fun getBankslipUseCase(
-        bankslipRepository: BankslipRepository,
+    fun getBankSlipUseCase(
+        bankSlipRepository: BankSlipRepository,
         logger: Logger
-    ): GetBankslipUseCase {
-        return GetBankslipUseCase(bankslipRepository, logger)
+    ): GetBankSlipUseCase {
+        return GetBankSlipUseCase(bankSlipRepository, logger)
     }
 
     @Bean
-    fun deleteBankslipUseCase(
-        bankslipRepository: BankslipRepository,
+    fun deleteBankSlipUseCase(
+        bankSlipRepository: BankSlipRepository,
         logger: Logger
-    ): DeleteBankslipUseCase {
-        return DeleteBankslipUseCase(bankslipRepository, logger)
+    ): DeleteBankSlipUseCase {
+        return DeleteBankSlipUseCase(bankSlipRepository, logger)
     }
 
     @Bean
-    fun payBankslipUseCase(
-        bankslipRepository: BankslipRepository,
+    fun payBankSlipUseCase(
+        bankSlipRepository: BankSlipRepository,
         eventPublisher: DomainEventPublisher,
         logger: Logger
-    ): PayBankslipUseCase {
-        return PayBankslipUseCase(bankslipRepository, eventPublisher, logger)
+    ): PayBankSlipUseCase {
+        return PayBankSlipUseCase(bankSlipRepository, eventPublisher, logger)
     }
 
     @Bean
-    fun registerBankslipUseCase(
-        bankslipRepository: BankslipRepository,
+    fun registerBankSlipUseCase(
+        bankSlipRepository: BankSlipRepository,
         logger: Logger
-    ): RegisterBankslipUseCase {
-        return RegisterBankslipUseCase(bankslipRepository, logger)
+    ): RegisterBankSlipUseCase {
+        return RegisterBankSlipUseCase(bankSlipRepository, logger)
     }
 
     @Bean
-    fun generateBankslipPdfUseCase(
-        bankslipRepository: BankslipRepository,
+    fun generateBankSlipPdfUseCase(
+        bankSlipRepository: BankSlipRepository,
         bankConfigurationRepository: BankConfigurationRepository,
         pdfGeneratorService: PdfGeneratorService,
         fileStorageService: FileStorageService,
         logger: Logger
-    ): GenerateBankslipPdfUseCase {
-        return GenerateBankslipPdfUseCase(
-            bankslipRepository,
+    ): GenerateBankSlipPdfUseCase {
+        return GenerateBankSlipPdfUseCase(
+            bankSlipRepository,
             bankConfigurationRepository,
             pdfGeneratorService,
             fileStorageService,
@@ -85,7 +102,7 @@ class UseCaseConfig {
     // CNAB Use Cases
     @Bean
     fun generateRemittanceFileUseCase(
-        bankslipRepository: BankslipRepository,
+        bankSlipRepository: BankSlipRepository,
         bankConfigurationRepository: BankConfigurationRepository,
         cnabService: CnabService,
         cnabFileRepository: CnabFileRepository,
@@ -93,7 +110,7 @@ class UseCaseConfig {
         logger: Logger
     ): GenerateRemittanceFileUseCase {
         return GenerateRemittanceFileUseCase(
-            bankslipRepository,
+            bankSlipRepository,
             bankConfigurationRepository,
             cnabService,
             cnabFileRepository,
@@ -154,7 +171,7 @@ class UseCaseConfig {
     @Bean
     fun testWebhookUseCase(
         webhookRepository: WebhookRepository,
-        webhookDeliveryService: br.com.misterstorm.bankslipgenerator.adapter.output.webhook.WebhookDeliveryService,
+        webhookDeliveryService: WebhookDeliveryService,
         logger: Logger
     ): TestWebhookUseCase {
         return TestWebhookUseCase(webhookRepository, webhookDeliveryService, logger)
@@ -162,13 +179,12 @@ class UseCaseConfig {
 
     // Online Registration Use Case
     @Bean
-    fun registerBankslipOnlineUseCase(
-        bankslipRepository: BankslipRepository,
+    fun registerBankSlipOnlineUseCase(
+        bankSlipRepository: BankSlipRepository,
         onlineServices: List<BankOnlineRegistrationService>,
         eventPublisher: DomainEventPublisher,
         logger: Logger
-    ): RegisterBankslipOnlineUseCase {
-        return RegisterBankslipOnlineUseCase(bankslipRepository, onlineServices, eventPublisher, logger)
+    ): RegisterBankSlipOnlineUseCase {
+        return RegisterBankSlipOnlineUseCase(bankSlipRepository, onlineServices, eventPublisher, logger)
     }
 }
-

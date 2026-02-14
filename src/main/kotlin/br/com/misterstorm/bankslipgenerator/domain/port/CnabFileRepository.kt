@@ -4,7 +4,7 @@ import arrow.core.Either
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFile
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFileType
-import java.util.*
+import java.util.UUID
 
 /**
  * Repository port for CNAB file persistence

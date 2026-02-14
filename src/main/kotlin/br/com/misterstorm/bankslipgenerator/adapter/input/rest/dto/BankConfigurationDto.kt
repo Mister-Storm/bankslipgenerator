@@ -1,7 +1,11 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto
 
-import br.com.misterstorm.bankslipgenerator.domain.model.*
-import kotlinx.serialization.Serializable
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabConfiguration
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
+import br.com.misterstorm.bankslipgenerator.domain.model.FieldConfiguration
+import br.com.misterstorm.bankslipgenerator.domain.model.FieldPosition
+import br.com.misterstorm.bankslipgenerator.domain.model.LayoutConfiguration
+import br.com.misterstorm.bankslipgenerator.domain.model.ValidationRule
 
 /**
  * Request DTO for creating a bank configuration

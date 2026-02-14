@@ -8,7 +8,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
 import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Use case for creating webhook configuration

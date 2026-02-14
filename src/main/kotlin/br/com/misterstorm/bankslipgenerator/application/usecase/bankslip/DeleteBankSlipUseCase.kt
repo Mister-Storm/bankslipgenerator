@@ -4,31 +4,28 @@ import arrow.core.Either
 import arrow.core.left
 import br.com.misterstorm.bankslipgenerator.application.usecase.UseCase
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.port.BankslipRepository
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
-import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
- * Use case for soft deleting a bankslip
+ * Use case for soft deleting a BankSlip
  */
-class DeleteBankslipUseCase(
-    private val bankslipRepository: BankslipRepository,
+class DeleteBankSlipUseCase(
+    private val bankSlipRepository: BankSlipRepository,
     logger: Logger
 ) : UseCase<UUID, Unit>(logger) {
 
     override suspend fun execute(input: UUID): Either<DomainError, Unit> {
-        val bankslip = bankslipRepository.findById(input)
+        val bankSlip = bankSlipRepository.findById(input)
             .fold({ return it.left() }, { it })
 
         // Check if already deleted
-        if (bankslip.isDeleted()) {
-            return DomainError.BankslipAlreadyCancelled(input.toString()).left()
+        if (bankSlip.isDeleted()) {
+            return DomainError.BankSlipAlreadyCancelled(input.toString()).left()
         }
 
         // Perform soft delete
-        return bankslipRepository.softDelete(input)
+        return bankSlipRepository.softDelete(input)
     }
 }
-

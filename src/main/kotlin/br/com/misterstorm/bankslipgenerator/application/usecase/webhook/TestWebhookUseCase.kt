@@ -9,7 +9,7 @@ import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
 import br.com.misterstorm.bankslipgenerator.domain.port.WebhookRepository
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
-import java.util.*
+import java.util.UUID
 
 /**
  * Use case for testing webhook delivery

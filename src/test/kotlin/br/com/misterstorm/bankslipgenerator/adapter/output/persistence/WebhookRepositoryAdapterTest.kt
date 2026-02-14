@@ -1,17 +1,19 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence
 
-import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.JdbcWebhookRepository
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.WebhookConfigEntity
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Unit tests for WebhookRepositoryAdapter
@@ -162,7 +164,7 @@ class WebhookRepositoryAdapterTest {
     fun `ensure deleteConfig soft deletes webhook`() = runTest {
         // Arrange
         val id = UUID.randomUUID()
-        every { jdbcRepository.softDeleteConfig(id) } just Runs
+        every { jdbcRepository.softDeleteConfig(id) } returns Unit
 
         // Act
         val result = adapter.deleteConfig(id)

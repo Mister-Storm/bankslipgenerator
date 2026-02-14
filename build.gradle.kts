@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "2.1.0"
-    kotlin("plugin.spring") version "2.1.0"
-    kotlin("plugin.serialization") version "2.1.0"
+    kotlin("jvm") version "2.1.10"
+    kotlin("plugin.spring") version "2.1.10"
+    kotlin("plugin.serialization") version "2.1.10"
     id("org.springframework.boot") version "3.4.1"
     id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
@@ -29,20 +29,19 @@ repositories {
 // Configure integration test source set
 sourceSets {
     create("intTest") {
-        kotlin {
-            srcDir("src/intTest/kotlin")
-            compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
-            runtimeClasspath += output + compileClasspath
-        }
-        resources {
-            srcDir("src/intTest/resources")
-        }
+        compileClasspath += sourceSets["main"].output
+        runtimeClasspath += sourceSets["main"].output
     }
 }
 
 val intTestImplementation by configurations.getting {
     extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
+}
+
+val intTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.runtimeOnly.get())
+    extendsFrom(configurations.testRuntimeOnly.get())
 }
 
 dependencies {
@@ -131,13 +130,19 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Integration Test Dependencies
+    intTestImplementation(platform("org.testcontainers:testcontainers-bom:1.20.5"))
     intTestImplementation("org.springframework.boot:spring-boot-testcontainers")
-    intTestImplementation("org.testcontainers:testcontainers:1.20.4")
-    intTestImplementation("org.testcontainers:postgresql:1.20.4")
-    intTestImplementation("org.testcontainers:localstack:1.20.4")
-    intTestImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    intTestImplementation("org.testcontainers:postgresql:1.21.0")
+    intTestImplementation("org.testcontainers:junit-jupiter:1.21.0")
+    intTestImplementation("org.testcontainers:localstack")
+    intTestImplementation(platform("org.testcontainers:testcontainers-bom:1.20.5"))
+    intTestImplementation("org.testcontainers:testcontainers")
     intTestImplementation("io.rest-assured:rest-assured:5.5.0")
     intTestImplementation("io.rest-assured:kotlin-extensions:5.5.0")
+    intTestImplementation("com.github.docker-java:docker-java-core:3.3.6")
+    intTestImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.3.6")
+
+
 }
 
 kotlin {
@@ -160,8 +165,14 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
     shouldRunAfter(tasks.test)
 
+    environment("TESTCONTAINERS_HOST_OVERRIDE", "localhost")
+    environment("TESTCONTAINERS_CHECKS_DISABLE", "true")
+    environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+    environment("DOCKER_HOST", "unix:///var/run/docker.sock")
+
     useJUnitPlatform()
 }
+
 
 tasks.check {
     dependsOn(integrationTest)

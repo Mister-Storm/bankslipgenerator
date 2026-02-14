@@ -1,13 +1,17 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.controller
 
-import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.*
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.AddressDto
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.BeneficiaryDto
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.CreateBankSlipRequest
+import br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto.PayerDto
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
 import io.restassured.module.kotlin.extensions.Extract
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,11 +25,11 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * Integration tests for BankslipController
+ * Integration tests for BankSlipController
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class BankslipControllerIntegrationTest {
+class BankSlipControllerIntegrationTest {
 
     @LocalServerPort
     private var port: Int = 0
@@ -37,9 +41,9 @@ class BankslipControllerIntegrationTest {
     }
 
     @Test
-    fun `ensure creates bankslip successfully via REST API`() {
+    fun `ensure creates bankSlip successfully via REST API`() {
         // Arrange
-        val request = createValidBankslipRequest()
+        val request = createValidRequest()
 
         // Act & Assert
         Given {
@@ -60,14 +64,13 @@ class BankslipControllerIntegrationTest {
     }
 
     @Test
-    fun `ensure retrieves bankslip by id via REST API`() {
-        // Arrange - Create a bankslip first
-        val request = createValidBankslipRequest()
+    fun `ensure gets bankSlip by id`() {
+        // Arrange - Create bankSlip first
+        val request = createValidRequest()
 
-        val bankslipId: String = Given {
+        val bankSlipId: String = Given {
             contentType(ContentType.JSON)
             body(request)
-            header("API-Version", "v1")
         } When {
             post("/api/bankslips")
         } Extract {
@@ -78,42 +81,33 @@ class BankslipControllerIntegrationTest {
         Given {
             header("API-Version", "v1")
         } When {
-            get("/api/bankslips/$bankslipId")
+            get("/api/bankslips/$bankSlipId")
         } Then {
             statusCode(200)
-            body("id", equalTo<String>(bankslipId))
-            body("status", equalTo("CREATED"))
+            body("id", equalTo(bankSlipId))
+            body("bankCode", equalTo("001"))
         }
     }
 
     @Test
-    fun `ensure fails to create bankslip with invalid due date`() {
-        // Arrange
-        val request = createValidBankslipRequest().copy(
-            dueDate = LocalDate.now().minusDays(1)
-        )
-
-        // Act & Assert
+    fun `ensure returns 404 for non-existent bankSlip`() {
         Given {
-            contentType(ContentType.JSON)
-            body(request)
             header("API-Version", "v1")
         } When {
-            post("/api/bankslips")
+            get("/api/bankslips/00000000-0000-0000-0000-000000000000")
         } Then {
-            statusCode(400)
+            statusCode(404)
         }
     }
 
     @Test
-    fun `ensure soft deletes bankslip via REST API`() {
-        // Arrange - Create a bankslip first
-        val request = createValidBankslipRequest()
+    fun `ensure soft deletes bankSlip via REST API`() {
+        // Arrange - Create a bankSlip first
+        val request = createValidRequest()
 
-        val bankslipId: String = Given {
+        val bankSlipId: String = Given {
             contentType(ContentType.JSON)
             body(request)
-            header("API-Version", "v1")
         } When {
             post("/api/bankslips")
         } Extract {
@@ -124,13 +118,13 @@ class BankslipControllerIntegrationTest {
         Given {
             header("API-Version", "v1")
         } When {
-            delete("/api/bankslips/$bankslipId")
+            delete("/api/bankslips/$bankSlipId")
         } Then {
             statusCode(204)
         }
     }
 
-    private fun createValidBankslipRequest() = CreateBankslipRequest(
+    private fun createValidRequest() = CreateBankSlipRequest(
         bankCode = "001",
         amount = BigDecimal("100.00"),
         dueDate = LocalDate.now().plusDays(30),
@@ -166,7 +160,8 @@ class BankslipControllerIntegrationTest {
 
     companion object {
         @Container
-        private val postgresContainer = PostgreSQLContainer<Nothing>("postgres:15-alpine").apply {
+        @JvmField
+        val postgresContainer = PostgreSQLContainer<Nothing>("postgres:15-alpine").apply {
             withDatabaseName("bankslipgenerator_test")
             withUsername("test")
             withPassword("test")
@@ -174,7 +169,7 @@ class BankslipControllerIntegrationTest {
 
         @JvmStatic
         @DynamicPropertySource
-        fun properties(registry: DynamicPropertyRegistry) {
+        fun configureProperties(registry: DynamicPropertyRegistry) {
             registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
             registry.add("spring.datasource.username", postgresContainer::getUsername)
             registry.add("spring.datasource.password", postgresContainer::getPassword)

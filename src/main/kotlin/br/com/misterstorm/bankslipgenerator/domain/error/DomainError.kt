@@ -7,10 +7,10 @@ sealed class DomainError(
     open val message: String,
     open val details: Map<String, Any> = emptyMap()
 ) {
-    data class BankslipNotFound(
-        val bankslipId: String,
-        override val message: String = "Bankslip not found",
-        override val details: Map<String, Any> = mapOf("bankslipId" to bankslipId)
+    data class BankSlipNotFound(
+        val bankSlipId: String,
+        override val message: String = "BankSlip not found",
+        override val details: Map<String, Any> = mapOf("bankSlipId" to bankSlipId)
     ) : DomainError(message, details)
 
     data class InvalidBarcode(
@@ -30,16 +30,16 @@ sealed class DomainError(
         override val details: Map<String, Any> = mapOf("amount" to amount)
     ) : DomainError(message, details)
 
-    data class BankslipAlreadyPaid(
-        val bankslipId: String,
-        override val message: String = "Bankslip already paid",
-        override val details: Map<String, Any> = mapOf("bankslipId" to bankslipId)
+    data class BankSlipAlreadyPaid(
+        val bankSlipId: String,
+        override val message: String = "BankSlip already paid",
+        override val details: Map<String, Any> = mapOf("bankSlipId" to bankSlipId)
     ) : DomainError(message, details)
 
-    data class BankslipAlreadyCancelled(
-        val bankslipId: String,
-        override val message: String = "Bankslip already cancelled",
-        override val details: Map<String, Any> = mapOf("bankslipId" to bankslipId)
+    data class BankSlipAlreadyCancelled(
+        val bankSlipId: String,
+        override val message: String = "BankSlip already cancelled",
+        override val details: Map<String, Any> = mapOf("bankSlipId" to bankSlipId)
     ) : DomainError(message, details)
 
     data class InvalidStatusTransition(

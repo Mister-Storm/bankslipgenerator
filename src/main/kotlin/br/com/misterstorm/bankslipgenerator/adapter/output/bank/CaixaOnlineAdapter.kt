@@ -4,8 +4,10 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.port.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.port.BankOnlineRegistrationService
+import br.com.misterstorm.bankslipgenerator.domain.port.BankSlipStatusResponse
+import br.com.misterstorm.bankslipgenerator.domain.port.RegistrationResponse
 import br.com.misterstorm.bankslipgenerator.infrastructure.logging.Logger
 import io.netty.handler.ssl.SslContextBuilder
 import org.springframework.beans.factory.annotation.Value
@@ -64,13 +66,13 @@ class CaixaOnlineAdapter(
         }
     }
 
-    override suspend fun register(bankslip: Bankslip): Either<DomainError, RegistrationResponse> {
+    override suspend fun register(bankSlip: BankSlip): Either<DomainError, RegistrationResponse> {
         return try {
             if (sslContext == null) {
                 return DomainError.UnexpectedError("Caixa certificate not configured").left()
             }
 
-            logger.info("Registering bankslip with Caixa using certificate", "bankslipId" to bankslip.id.toString())
+            logger.info("Registering BankSlip with Caixa using certificate", "bankSlipId" to bankSlip.id.toString())
 
             // Create HttpClient with SSL context
             val keyStore = KeyStore.getInstance("PKCS12")
@@ -94,12 +96,12 @@ class CaixaOnlineAdapter(
                 .build()
 
             val request = mapOf(
-                "numero_titulo" to bankslip.documentNumber,
-                "valor" to bankslip.amount.toString(),
-                "data_vencimento" to bankslip.dueDate.toString(),
+                "numero_titulo" to bankSlip.documentNumber,
+                "valor" to bankSlip.amount.toString(),
+                "data_vencimento" to bankSlip.dueDate.toString(),
                 "pagador" to mapOf(
-                    "nome" to bankslip.payer.name,
-                    "cpf_cnpj" to bankslip.payer.documentNumber
+                    "nome" to bankSlip.payer.name,
+                    "cpf_cnpj" to bankSlip.payer.documentNumber
                 )
             )
 
@@ -122,11 +124,10 @@ class CaixaOnlineAdapter(
         }
     }
 
-    override suspend fun cancel(bankslip: Bankslip): Either<DomainError, Unit> = Unit.right()
-    
-    override suspend fun query(bankslip: Bankslip): Either<DomainError, BankslipStatusResponse> =
-        BankslipStatusResponse("REGISTERED").right()
-    
+    override suspend fun cancel(bankSlip: BankSlip): Either<DomainError, Unit> = Unit.right()
+
+    override suspend fun query(bankSlip: BankSlip): Either<DomainError, BankSlipStatusResponse> =
+        BankSlipStatusResponse("REGISTERED").right()
+
     override fun supports(bankCode: String): Boolean = bankCode == this.bankCode
 }
-

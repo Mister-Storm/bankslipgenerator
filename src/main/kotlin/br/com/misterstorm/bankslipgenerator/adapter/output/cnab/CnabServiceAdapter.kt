@@ -4,14 +4,18 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
-import br.com.misterstorm.bankslipgenerator.domain.model.*
+import br.com.misterstorm.bankslipgenerator.domain.model.BankConfiguration
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabFile
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabFileStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabFileType
+import br.com.misterstorm.bankslipgenerator.domain.model.CnabVersion
 import br.com.misterstorm.bankslipgenerator.domain.port.BankConfigurationRepository
 import br.com.misterstorm.bankslipgenerator.domain.port.CnabService
 import kotlinx.serialization.json.Json
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 
 /**
  * CNAB service implementation with DSL-based layout configuration
@@ -24,7 +28,7 @@ class CnabServiceAdapter(
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun generateRemittanceFile(
-        bankslips: List<Bankslip>,
+        bankSlips: List<BankSlip>,
         bankCode: String,
         version: CnabVersion
     ): Either<DomainError, CnabFile> {
@@ -33,8 +37,8 @@ class CnabServiceAdapter(
                 .fold({ return it.left() }, { it })
 
             val content = when (version) {
-                CnabVersion.CNAB240 -> generateCnab240Remittance(bankslips, bankConfig)
-                CnabVersion.CNAB400 -> generateCnab400Remittance(bankslips, bankConfig)
+                CnabVersion.CNAB240 -> generateCnab240Remittance(bankSlips, bankConfig)
+                CnabVersion.CNAB400 -> generateCnab400Remittance(bankSlips, bankConfig)
             }
 
             val fileName = "REM_${bankCode}_${System.currentTimeMillis()}.txt"
@@ -47,7 +51,7 @@ class CnabServiceAdapter(
                 fileName = fileName,
                 fileContent = content,
                 status = CnabFileStatus.PENDING,
-                totalRecords = bankslips.size + 2, // header + details + trailer
+                totalRecords = bankSlips.size + 2, // header + details + trailer
                 createdAt = LocalDateTime.now()
             ).right()
         } catch (e: Exception) {
@@ -96,7 +100,7 @@ class CnabServiceAdapter(
         }
     }
 
-    private fun generateCnab240Remittance(bankslips: List<Bankslip>, config: BankConfiguration): String {
+    private fun generateCnab240Remittance(bankSlips: List<BankSlip>, config: BankConfiguration): String {
         val lines = mutableListOf<String>()
 
         // Header do arquivo (registro tipo 0)
@@ -106,13 +110,13 @@ class CnabServiceAdapter(
         lines.add(generateCnab240LotHeader(config))
 
         // Detalhes (registros tipo 3 - segmentos P, Q, R, etc.)
-        bankslips.forEachIndexed { index, bankslip ->
-            lines.add(generateCnab240SegmentP(bankslip, config, index + 1))
-            lines.add(generateCnab240SegmentQ(bankslip, config, index + 1))
+        bankSlips.forEachIndexed { index, bankSlip ->
+            lines.add(generateCnab240SegmentP(bankSlip, config, index + 1))
+            lines.add(generateCnab240SegmentQ(bankSlip, config, index + 1))
         }
 
         // Trailer do lote (registro tipo 5)
-        lines.add(generateCnab240LotTrailer(bankslips.size * 2))
+        lines.add(generateCnab240LotTrailer(bankSlips.size * 2))
 
         // Trailer do arquivo (registro tipo 9)
         lines.add(generateCnab240FileTrailer())
@@ -120,39 +124,39 @@ class CnabServiceAdapter(
         return lines.joinToString("\n")
     }
 
-    private fun generateCnab400Remittance(bankslips: List<Bankslip>, config: BankConfiguration): String {
+    private fun generateCnab400Remittance(bankSlips: List<BankSlip>, config: BankConfiguration): String {
         val lines = mutableListOf<String>()
 
         // Header (registro tipo 0)
         lines.add(generateCnab400Header(config))
 
         // Detalhes (registro tipo 1)
-        bankslips.forEach { bankslip ->
-            lines.add(generateCnab400Detail(bankslip, config))
+        bankSlips.forEach { bankSlip ->
+            lines.add(generateCnab400Detail(bankSlip, config))
         }
 
         // Trailer (registro tipo 9)
-        lines.add(generateCnab400Trailer(bankslips.size))
+        lines.add(generateCnab400Trailer(bankSlips.size))
 
         return lines.joinToString("\n")
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun processCnab240Return(lines: List<String>, config: BankConfiguration): Int {
         var processedCount = 0
         lines.forEach { line ->
             if (line.startsWith("3")) { // Detail record
-                // Process detail record
                 processedCount++
             }
         }
         return processedCount
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun processCnab400Return(lines: List<String>, config: BankConfiguration): Int {
         var processedCount = 0
         lines.forEach { line ->
             if (line.startsWith("1")) { // Detail record
-                // Process detail record
                 processedCount++
             }
         }
@@ -172,11 +176,13 @@ class CnabServiceAdapter(
         }.padEnd(240, ' ')
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun generateCnab240LotHeader(config: BankConfiguration): String {
         return "1".padEnd(240, ' ')
     }
 
-    private fun generateCnab240SegmentP(bankslip: Bankslip, config: BankConfiguration, sequenceNumber: Int): String {
+    @Suppress("UNUSED_PARAMETER")
+    private fun generateCnab240SegmentP(bankSlip: BankSlip, config: BankConfiguration, sequenceNumber: Int): String {
         return buildString {
             append(config.bankCode.padStart(3, '0'))
             append("0001") // Lote
@@ -185,17 +191,18 @@ class CnabServiceAdapter(
             append("P") // Código do segmento
             append(" ") // Uso exclusivo FEBRABAN
             append("01") // Código de movimento
-            append(bankslip.beneficiary.agencyNumber.padStart(5, '0'))
+            append(bankSlip.beneficiary.agencyNumber.padStart(5, '0'))
             append(" ")
-            append(bankslip.beneficiary.accountNumber.padStart(12, '0'))
-            append(bankslip.beneficiary.accountDigit)
+            append(bankSlip.beneficiary.accountNumber.padStart(12, '0'))
+            append(bankSlip.beneficiary.accountDigit)
             append(" ")
-            append(bankslip.documentNumber.padStart(20, '0'))
+            append(bankSlip.documentNumber.padStart(20, '0'))
             append(" ".repeat(175)) // Campos complementares
         }.padEnd(240, ' ')
     }
 
-    private fun generateCnab240SegmentQ(bankslip: Bankslip, config: BankConfiguration, sequenceNumber: Int): String {
+    @Suppress("UNUSED_PARAMETER")
+    private fun generateCnab240SegmentQ(bankSlip: BankSlip, config: BankConfiguration, sequenceNumber: Int): String {
         return buildString {
             append(config.bankCode.padStart(3, '0'))
             append("0001") // Lote
@@ -204,13 +211,14 @@ class CnabServiceAdapter(
             append("Q") // Código do segmento
             append(" ") // Uso exclusivo FEBRABAN
             append("01") // Código de movimento
-            append(if (bankslip.payer.documentNumber.length > 11) "2" else "1") // Tipo de inscrição
-            append(bankslip.payer.documentNumber.padStart(15, '0'))
-            append(bankslip.payer.name.take(40).padEnd(40, ' '))
+            append(if (bankSlip.payer.documentNumber.length > 11) "2" else "1") // Tipo de inscrição
+            append(bankSlip.payer.documentNumber.padStart(15, '0'))
+            append(bankSlip.payer.name.take(40).padEnd(40, ' '))
             append(" ".repeat(165)) // Campos complementares
         }.padEnd(240, ' ')
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun generateCnab240LotTrailer(recordCount: Int): String {
         return "5".padEnd(240, ' ')
     }
@@ -220,23 +228,25 @@ class CnabServiceAdapter(
     }
 
     // CNAB 400 generators (simplified)
+    @Suppress("UNUSED_PARAMETER")
     private fun generateCnab400Header(config: BankConfiguration): String {
         return "0".padEnd(400, ' ')
     }
 
-    private fun generateCnab400Detail(bankslip: Bankslip, config: BankConfiguration): String {
+    @Suppress("UNUSED_PARAMETER")
+    private fun generateCnab400Detail(bankSlip: BankSlip, config: BankConfiguration): String {
         return buildString {
             append("1") // Tipo de registro
-            append(if (bankslip.payer.documentNumber.length > 11) "02" else "01")
-            append(bankslip.payer.documentNumber.padStart(14, '0'))
-            append(bankslip.documentNumber.padStart(25, '0'))
-            append(bankslip.amount.toString().replace(".", "").padStart(13, '0'))
+            append(if (bankSlip.payer.documentNumber.length > 11) "02" else "01")
+            append(bankSlip.payer.documentNumber.padStart(14, '0'))
+            append(bankSlip.documentNumber.padStart(25, '0'))
+            append(bankSlip.amount.toString().replace(".", "").padStart(13, '0'))
             append(" ".repeat(343)) // Campos complementares
         }.padEnd(400, ' ')
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun generateCnab400Trailer(recordCount: Int): String {
         return "9".padEnd(400, ' ')
     }
 }
-

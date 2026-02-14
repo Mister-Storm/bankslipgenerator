@@ -6,7 +6,11 @@ import br.com.misterstorm.bankslipgenerator.application.usecase.cnab.GenerateRem
 import br.com.misterstorm.bankslipgenerator.application.usecase.cnab.ProcessReturnFileUseCase
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 /**
  * REST controller for CNAB file operations
@@ -19,6 +23,7 @@ class CnabController(
 ) {
 
     @PostMapping("/remittance")
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateRemittanceFile(
         @RequestBody request: GenerateRemittanceRequest,
         @RequestHeader("API-Version", defaultValue = "v1") apiVersion: String
@@ -47,6 +52,7 @@ class CnabController(
     }
 
     @PostMapping("/return")
+    @Suppress("UNUSED_PARAMETER")
     suspend fun processReturnFile(
         @RequestBody request: ProcessReturnRequest,
         @RequestHeader("API-Version", defaultValue = "v1") apiVersion: String

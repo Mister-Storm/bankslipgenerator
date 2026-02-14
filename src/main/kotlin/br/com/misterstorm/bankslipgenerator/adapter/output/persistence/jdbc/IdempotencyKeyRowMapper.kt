@@ -3,7 +3,7 @@ package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.IdempotencyKeyEntity
 import java.sql.ResultSet
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 class IdempotencyKeyRowMapper : org.springframework.jdbc.core.RowMapper<IdempotencyKeyEntity> {
     override fun mapRow(rs: ResultSet, rowNum: Int): IdempotencyKeyEntity {

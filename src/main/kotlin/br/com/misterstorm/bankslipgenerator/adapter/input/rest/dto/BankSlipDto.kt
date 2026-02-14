@@ -1,15 +1,25 @@
 package br.com.misterstorm.bankslipgenerator.adapter.input.rest.dto
 
-import br.com.misterstorm.bankslipgenerator.domain.model.*
+import br.com.misterstorm.bankslipgenerator.domain.model.Address
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.Beneficiary
+import br.com.misterstorm.bankslipgenerator.domain.model.Discount
+import br.com.misterstorm.bankslipgenerator.domain.model.DiscountType
+import br.com.misterstorm.bankslipgenerator.domain.model.Fine
+import br.com.misterstorm.bankslipgenerator.domain.model.FineType
+import br.com.misterstorm.bankslipgenerator.domain.model.Interest
+import br.com.misterstorm.bankslipgenerator.domain.model.InterestType
+import br.com.misterstorm.bankslipgenerator.domain.model.Payer
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
- * Request DTO for creating a bankslip
+ * Request DTO for creating a BankSlip
  */
-data class CreateBankslipRequest(
+data class CreateBankSlipRequest(
     val bankCode: String,
     val amount: BigDecimal,
     val dueDate: LocalDate,
@@ -64,9 +74,9 @@ data class InterestDto(
 )
 
 /**
- * Response DTO for bankslip
+ * Response DTO for BankSlip
  */
-data class BankslipResponse(
+data class BankSlipResponse(
     val id: UUID,
     val bankCode: String,
     val documentNumber: String,
@@ -75,7 +85,7 @@ data class BankslipResponse(
     val amount: BigDecimal,
     val dueDate: LocalDate,
     val issueDate: LocalDate,
-    val status: BankslipStatus,
+    val status: BankSlipStatus,
     val payer: PayerDto,
     val beneficiary: BeneficiaryDto,
     val instructions: List<String>,
@@ -89,21 +99,21 @@ data class BankslipResponse(
 )
 
 /**
- * Request DTO for paying a bankslip
+ * Request DTO for paying a BankSlip
  */
-data class PayBankslipRequest(
+data class PayBankSlipRequest(
     val paymentDate: LocalDateTime,
     val paidAmount: BigDecimal
 )
 
 // Extension functions for mapping
-fun CreateBankslipRequest.toPayer(): Payer = Payer(
+fun CreateBankSlipRequest.toPayer(): Payer = Payer(
     name = payer.name,
     documentNumber = payer.documentNumber,
     address = payer.address.toDomain()
 )
 
-fun CreateBankslipRequest.toBeneficiary(): Beneficiary = Beneficiary(
+fun CreateBankSlipRequest.toBeneficiary(): Beneficiary = Beneficiary(
     name = beneficiary.name,
     documentNumber = beneficiary.documentNumber,
     address = beneficiary.address.toDomain(),
@@ -139,7 +149,7 @@ fun InterestDto.toDomain(): Interest = Interest(
     value = value
 )
 
-fun Bankslip.toResponse(): BankslipResponse = BankslipResponse(
+fun BankSlip.toResponse(): BankSlipResponse = BankSlipResponse(
     id = id,
     bankCode = bankCode,
     documentNumber = documentNumber,
@@ -202,4 +212,3 @@ fun Interest.toDto(): InterestDto = InterestDto(
     type = type,
     value = value
 )
-

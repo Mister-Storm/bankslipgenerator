@@ -1,6 +1,11 @@
 package br.com.misterstorm.bankslipgenerator.infrastructure.config
 
-import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.*
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.BankConfigurationRowMapper
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.BankSlipRowMapper
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.CnabFileRowMapper
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.DeadLetterQueueRowMapper
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.IdempotencyKeyRowMapper
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableAsync
@@ -10,7 +15,6 @@ import org.thymeleaf.templatemode.TemplateMode
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import org.springframework.beans.factory.annotation.Value
 
 /**
  * Spring configuration for infrastructure beans
@@ -47,7 +51,7 @@ class InfrastructureConfig {
 
     // JDBC Row Mappers
     @Bean
-    fun bankslipRowMapper(): BankslipRowMapper = BankslipRowMapper()
+    fun bankSlipRowMapper(): BankSlipRowMapper = BankSlipRowMapper()
 
     @Bean
     fun bankConfigurationRowMapper(): BankConfigurationRowMapper = BankConfigurationRowMapper()
@@ -61,4 +65,3 @@ class InfrastructureConfig {
     @Bean
     fun deadLetterQueueRowMapper(): DeadLetterQueueRowMapper = DeadLetterQueueRowMapper()
 }
-

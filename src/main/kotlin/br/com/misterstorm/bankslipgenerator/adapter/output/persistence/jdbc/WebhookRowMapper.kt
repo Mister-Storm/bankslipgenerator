@@ -1,10 +1,13 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc
-import br.com.misterstorm.bankslipgenerator.domain.model.*
+
+import br.com.misterstorm.bankslipgenerator.domain.model.WebhookConfig
+import br.com.misterstorm.bankslipgenerator.domain.model.WebhookDelivery
+import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.springframework.jdbc.core.RowMapper
 import java.sql.ResultSet
-import java.util.*
+import java.util.UUID
 class WebhookConfigRowMapper : RowMapper<WebhookConfig> {
     private val json = Json { ignoreUnknownKeys = true }
     override fun mapRow(rs: ResultSet, rowNum: Int): WebhookConfig {

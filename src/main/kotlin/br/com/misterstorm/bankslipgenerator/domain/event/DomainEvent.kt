@@ -1,7 +1,7 @@
 package br.com.misterstorm.bankslipgenerator.domain.event
 
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * Base interface for all domain events
@@ -13,11 +13,11 @@ interface DomainEvent {
 }
 
 /**
- * Bankslip domain events
+ * BankSlip domain events
  */
-sealed class BankslipEvent : DomainEvent {
-    
-    data class BankslipCreated(
+sealed class BankSlipEvent : DomainEvent {
+
+    data class BankSlipCreated(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID,
@@ -25,44 +25,44 @@ sealed class BankslipEvent : DomainEvent {
         val amount: String,
         val dueDate: String,
         val payerDocument: String
-    ) : BankslipEvent()
-    
-    data class BankslipRegistered(
+    ) : BankSlipEvent()
+
+    data class BankSlipRegistered(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID,
         val registrationType: String,
         val registrationId: String? = null
-    ) : BankslipEvent()
-    
-    data class BankslipPaid(
+    ) : BankSlipEvent()
+
+    data class BankSlipPaid(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID,
         val paidAmount: String,
         val paymentDate: String
-    ) : BankslipEvent()
-    
-    data class BankslipCancelled(
+    ) : BankSlipEvent()
+
+    data class BankSlipCancelled(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID,
         val reason: String? = null
-    ) : BankslipEvent()
-    
-    data class BankslipRegistrationFailed(
+    ) : BankSlipEvent()
+
+    data class BankSlipRegistrationFailed(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID,
         val errorMessage: String,
         val errorCode: String? = null
-    ) : BankslipEvent()
-    
-    data class BankslipExpired(
+    ) : BankSlipEvent()
+
+    data class BankSlipExpired(
         override val eventId: UUID = UUID.randomUUID(),
         override val occurredOn: LocalDateTime = LocalDateTime.now(),
         override val aggregateId: UUID
-    ) : BankslipEvent()
+    ) : BankSlipEvent()
 }
 
 /**

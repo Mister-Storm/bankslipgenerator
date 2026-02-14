@@ -1,27 +1,26 @@
 package br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc
 
-import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.BankslipEntity
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.toEntity
-import br.com.misterstorm.bankslipgenerator.domain.model.Bankslip
-import br.com.misterstorm.bankslipgenerator.domain.model.BankslipStatus
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlip
+import br.com.misterstorm.bankslipgenerator.domain.model.BankSlipStatus
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 @Repository
-class JdbcBankslipRepository(
+class JdbcBankSlipRepository(
     private val jdbcTemplate: JdbcTemplate,
-    private val rowMapper: BankslipRowMapper
+    private val rowMapper: BankSlipRowMapper
 ) {
-    fun save(bankslip: Bankslip): Bankslip {
-        val entity = bankslip.toEntity()
+    fun save(bankSlip: BankSlip): BankSlip {
+        val entity = bankSlip.toEntity()
         val now = LocalDateTime.now()
 
         jdbcTemplate.update(
-            BankslipSql.INSERT,
+            BankSlipSql.INSERT,
             entity.id,
             entity.bankCode,
             entity.documentNumber,
@@ -66,15 +65,15 @@ class JdbcBankslipRepository(
             now
         )
 
-        return bankslip.copy(createdAt = now, updatedAt = now)
+        return bankSlip.copy(createdAt = now, updatedAt = now)
     }
 
-    fun update(bankslip: Bankslip): Bankslip {
-        val entity = bankslip.toEntity()
+    fun update(bankSlip: BankSlip): BankSlip {
+        val entity = bankSlip.toEntity()
         val now = LocalDateTime.now()
 
         jdbcTemplate.update(
-            BankslipSql.UPDATE,
+            BankSlipSql.UPDATE,
             entity.status.name,
             entity.paymentDate,
             entity.paidAmount,
@@ -82,36 +81,36 @@ class JdbcBankslipRepository(
             entity.id
         )
 
-        return bankslip.copy(updatedAt = now)
+        return bankSlip.copy(updatedAt = now)
     }
 
-    fun findById(id: UUID): Bankslip? {
+    fun findById(id: UUID): BankSlip? {
         return try {
-            jdbcTemplate.queryForObject(BankslipSql.FIND_BY_ID, rowMapper, id)
+            jdbcTemplate.queryForObject(BankSlipSql.FIND_BY_ID, rowMapper, id)
         } catch (e: EmptyResultDataAccessException) {
             null
         }
     }
 
-    fun findByDocumentNumber(documentNumber: String): Bankslip? {
+    fun findByDocumentNumber(documentNumber: String): BankSlip? {
         return try {
-            jdbcTemplate.queryForObject(BankslipSql.FIND_BY_DOCUMENT_NUMBER, rowMapper, documentNumber)
+            jdbcTemplate.queryForObject(BankSlipSql.FIND_BY_DOCUMENT_NUMBER, rowMapper, documentNumber)
         } catch (e: EmptyResultDataAccessException) {
             null
         }
     }
 
-    fun findByBarcode(barcode: String): Bankslip? {
+    fun findByBarcode(barcode: String): BankSlip? {
         return try {
-            jdbcTemplate.queryForObject(BankslipSql.FIND_BY_BARCODE, rowMapper, barcode)
+            jdbcTemplate.queryForObject(BankSlipSql.FIND_BY_BARCODE, rowMapper, barcode)
         } catch (e: EmptyResultDataAccessException) {
             null
         }
     }
 
-    fun findByStatus(status: BankslipStatus, page: Int, size: Int): List<Bankslip> {
+    fun findByStatus(status: BankSlipStatus, page: Int, size: Int): List<BankSlip> {
         return jdbcTemplate.query(
-            "${BankslipSql.FIND_BY_STATUS} LIMIT ? OFFSET ?",
+            "${BankSlipSql.FIND_BY_STATUS} LIMIT ? OFFSET ?",
             rowMapper,
             status.name,
             size,
@@ -119,13 +118,13 @@ class JdbcBankslipRepository(
         )
     }
 
-    fun findByDueDateBetween(startDate: LocalDate, endDate: LocalDate): List<Bankslip> {
-        return jdbcTemplate.query(BankslipSql.FIND_BY_DUE_DATE_BETWEEN, rowMapper, startDate, endDate)
+    fun findByDueDateBetween(startDate: LocalDate, endDate: LocalDate): List<BankSlip> {
+        return jdbcTemplate.query(BankSlipSql.FIND_BY_DUE_DATE_BETWEEN, rowMapper, startDate, endDate)
     }
 
-    fun findByPayerDocumentNumber(documentNumber: String, page: Int, size: Int): List<Bankslip> {
+    fun findByPayerDocumentNumber(documentNumber: String, page: Int, size: Int): List<BankSlip> {
         return jdbcTemplate.query(
-            "${BankslipSql.FIND_BY_PAYER_DOCUMENT} LIMIT ? OFFSET ?",
+            "${BankSlipSql.FIND_BY_PAYER_DOCUMENT} LIMIT ? OFFSET ?",
             rowMapper,
             documentNumber,
             size,
@@ -134,7 +133,6 @@ class JdbcBankslipRepository(
     }
 
     fun softDelete(id: UUID) {
-        jdbcTemplate.update(BankslipSql.SOFT_DELETE, LocalDateTime.now(), id)
+        jdbcTemplate.update(BankSlipSql.SOFT_DELETE, LocalDateTime.now(), id)
     }
 }
-

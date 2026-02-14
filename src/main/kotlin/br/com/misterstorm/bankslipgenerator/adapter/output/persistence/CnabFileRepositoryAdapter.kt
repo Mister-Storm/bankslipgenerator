@@ -3,14 +3,15 @@ package br.com.misterstorm.bankslipgenerator.adapter.output.persistence
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.*
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.toDomain
+import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.entity.toEntity
 import br.com.misterstorm.bankslipgenerator.adapter.output.persistence.jdbc.JdbcCnabFileRepository
 import br.com.misterstorm.bankslipgenerator.domain.error.DomainError
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFile
 import br.com.misterstorm.bankslipgenerator.domain.model.CnabFileType
 import br.com.misterstorm.bankslipgenerator.domain.port.CnabFileRepository
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.UUID
 
 @Component
 class CnabFileRepositoryAdapter(

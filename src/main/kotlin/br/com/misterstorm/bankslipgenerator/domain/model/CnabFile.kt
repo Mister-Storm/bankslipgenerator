@@ -1,14 +1,14 @@
 package br.com.misterstorm.bankslipgenerator.domain.model
 
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 /**
  * CNAB file types
  */
 enum class CnabFileType {
-    REMITTANCE, // Arquivo de remessa (envio ao banco)
-    RETURN      // Arquivo de retorno (recebimento do banco)
+    REMITTANCE,
+    RETURN
 }
 
 /**

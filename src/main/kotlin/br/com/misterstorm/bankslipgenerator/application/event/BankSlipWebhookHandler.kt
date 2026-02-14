@@ -1,7 +1,7 @@
 package br.com.misterstorm.bankslipgenerator.application.event
 
 import br.com.misterstorm.bankslipgenerator.adapter.output.webhook.WebhookDeliveryService
-import br.com.misterstorm.bankslipgenerator.domain.event.BankslipEvent
+import br.com.misterstorm.bankslipgenerator.domain.event.BankSlipEvent
 import br.com.misterstorm.bankslipgenerator.domain.event.DomainEvent
 import br.com.misterstorm.bankslipgenerator.domain.event.DomainEventHandler
 import br.com.misterstorm.bankslipgenerator.domain.model.WebhookEventType
@@ -15,22 +15,22 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 
 /**
- * Event handler that listens to bankslip events and triggers webhooks
+ * Event handler that listens to BankSlip events and triggers webhooks
  */
 @Component
-class BankslipWebhookHandler(
+class BankSlipWebhookHandler(
     private val webhookRepository: WebhookRepository,
     private val webhookDeliveryService: WebhookDeliveryService,
     private val logger: Logger
-) : DomainEventHandler<BankslipEvent> {
+) : DomainEventHandler<BankSlipEvent> {
 
     @Async
     @EventListener
-    override suspend fun handle(event: BankslipEvent) {
+    override suspend fun handle(event: BankSlipEvent) {
         if (!canHandle(event)) return
 
         logger.info(
-            "Handling bankslip event for webhook delivery",
+            "Handling BankSlip event for webhook delivery",
             "eventType" to event::class.simpleName.orEmpty(),
             "aggregateId" to event.aggregateId.toString()
         )
@@ -97,59 +97,59 @@ class BankslipWebhookHandler(
     }
 
     override fun canHandle(event: DomainEvent): Boolean {
-        return event is BankslipEvent
+        return event is BankSlipEvent
     }
 
-    private fun mapToWebhookEventType(event: BankslipEvent): WebhookEventType? {
+    private fun mapToWebhookEventType(event: BankSlipEvent): WebhookEventType? {
         return when (event) {
-            is BankslipEvent.BankslipCreated -> WebhookEventType.BANKSLIP_CREATED
-            is BankslipEvent.BankslipRegistered -> WebhookEventType.BANKSLIP_REGISTERED
-            is BankslipEvent.BankslipPaid -> WebhookEventType.BANKSLIP_PAID
-            is BankslipEvent.BankslipCancelled -> WebhookEventType.BANKSLIP_CANCELLED
-            is BankslipEvent.BankslipExpired -> WebhookEventType.BANKSLIP_EXPIRED
-            is BankslipEvent.BankslipRegistrationFailed -> WebhookEventType.BANKSLIP_REGISTRATION_FAILED
+            is BankSlipEvent.BankSlipCreated -> WebhookEventType.BANKSLIP_CREATED
+            is BankSlipEvent.BankSlipRegistered -> WebhookEventType.BANKSLIP_REGISTERED
+            is BankSlipEvent.BankSlipPaid -> WebhookEventType.BANKSLIP_PAID
+            is BankSlipEvent.BankSlipCancelled -> WebhookEventType.BANKSLIP_CANCELLED
+            is BankSlipEvent.BankSlipExpired -> WebhookEventType.BANKSLIP_EXPIRED
+            is BankSlipEvent.BankSlipRegistrationFailed -> WebhookEventType.BANKSLIP_REGISTRATION_FAILED
         }
     }
 
-    private fun buildPayload(event: BankslipEvent): Map<String, Any> {
+    private fun buildPayload(event: BankSlipEvent): Map<String, Any> {
         return when (event) {
-            is BankslipEvent.BankslipCreated -> mapOf(
+            is BankSlipEvent.BankSlipCreated -> mapOf(
                 "eventType" to "BANKSLIP_CREATED",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "bankCode" to event.bankCode,
                 "amount" to event.amount,
                 "dueDate" to event.dueDate,
                 "payerDocument" to event.payerDocument,
                 "timestamp" to event.occurredOn.toString()
             )
-            is BankslipEvent.BankslipRegistered -> mapOf(
+            is BankSlipEvent.BankSlipRegistered -> mapOf(
                 "eventType" to "BANKSLIP_REGISTERED",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "registrationType" to event.registrationType,
                 "registrationId" to (event.registrationId ?: ""),
                 "timestamp" to event.occurredOn.toString()
             )
-            is BankslipEvent.BankslipPaid -> mapOf(
+            is BankSlipEvent.BankSlipPaid -> mapOf(
                 "eventType" to "BANKSLIP_PAID",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "paidAmount" to event.paidAmount,
                 "paymentDate" to event.paymentDate,
                 "timestamp" to event.occurredOn.toString()
             )
-            is BankslipEvent.BankslipCancelled -> mapOf(
+            is BankSlipEvent.BankSlipCancelled -> mapOf(
                 "eventType" to "BANKSLIP_CANCELLED",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "reason" to (event.reason ?: ""),
                 "timestamp" to event.occurredOn.toString()
             )
-            is BankslipEvent.BankslipExpired -> mapOf(
+            is BankSlipEvent.BankSlipExpired -> mapOf(
                 "eventType" to "BANKSLIP_EXPIRED",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "timestamp" to event.occurredOn.toString()
             )
-            is BankslipEvent.BankslipRegistrationFailed -> mapOf(
+            is BankSlipEvent.BankSlipRegistrationFailed -> mapOf(
                 "eventType" to "BANKSLIP_REGISTRATION_FAILED",
-                "bankslipId" to event.aggregateId.toString(),
+                "bankSlipId" to event.aggregateId.toString(),
                 "errorMessage" to event.errorMessage,
                 "errorCode" to (event.errorCode ?: ""),
                 "timestamp" to event.occurredOn.toString()
@@ -157,4 +157,3 @@ class BankslipWebhookHandler(
         }
     }
 }
-
