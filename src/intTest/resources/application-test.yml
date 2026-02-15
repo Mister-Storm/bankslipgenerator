@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    org.springframework: WARN
+
+aws:
+  enabled: false
+
+management:
+  endpoints:
+    enabled-by-default: false

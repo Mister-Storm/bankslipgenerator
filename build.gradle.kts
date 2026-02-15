@@ -130,17 +130,16 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Integration Test Dependencies
-    intTestImplementation(platform("org.testcontainers:testcontainers-bom:1.20.5"))
     intTestImplementation("org.springframework.boot:spring-boot-testcontainers")
     intTestImplementation("org.testcontainers:postgresql:1.21.0")
     intTestImplementation("org.testcontainers:junit-jupiter:1.21.0")
     intTestImplementation("org.testcontainers:localstack")
-    intTestImplementation(platform("org.testcontainers:testcontainers-bom:1.20.5"))
-    intTestImplementation("org.testcontainers:testcontainers")
+    intTestImplementation("org.testcontainers:testcontainers:1.21.4")
     intTestImplementation("io.rest-assured:rest-assured:5.5.0")
     intTestImplementation("io.rest-assured:kotlin-extensions:5.5.0")
-    intTestImplementation("com.github.docker-java:docker-java-core:3.3.6")
-    intTestImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.3.6")
+    intTestImplementation(platform("org.testcontainers:testcontainers-bom:1.21.4"))
+    intTestImplementation("org.testcontainers:postgresql")
+    intTestImplementation("org.testcontainers:junit-jupiter")
 
 
 }
@@ -166,9 +165,6 @@ val integrationTest = tasks.register<Test>("integrationTest") {
     shouldRunAfter(tasks.test)
 
     environment("TESTCONTAINERS_HOST_OVERRIDE", "localhost")
-    environment("TESTCONTAINERS_CHECKS_DISABLE", "true")
-    environment("TESTCONTAINERS_RYUK_DISABLED", "true")
-    environment("DOCKER_HOST", "unix:///var/run/docker.sock")
 
     useJUnitPlatform()
 }

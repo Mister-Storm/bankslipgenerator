@@ -12,10 +12,12 @@ import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.notNullValue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -28,7 +30,7 @@ import java.time.LocalDate
  * Integration tests for BankSlipController
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@ActiveProfiles("test")
 class BankSlipControllerIntegrationTest {
 
     @LocalServerPort
@@ -159,12 +161,16 @@ class BankSlipControllerIntegrationTest {
     )
 
     companion object {
-        @Container
-        @JvmField
-        val postgresContainer = PostgreSQLContainer<Nothing>("postgres:15-alpine").apply {
-            withDatabaseName("bankslipgenerator_test")
-            withUsername("test")
-            withPassword("test")
+        lateinit var postgresContainer: PostgreSQLContainer<*>
+        @BeforeAll
+        @JvmStatic
+        fun startContainer() {
+            postgresContainer = PostgreSQLContainer("postgres:16").apply {
+                withDatabaseName("bankslipgenerator_test")
+                withUsername("test")
+                withPassword("test")
+                start()
+            }
         }
 
         @JvmStatic
@@ -173,6 +179,16 @@ class BankSlipControllerIntegrationTest {
             registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
             registry.add("spring.datasource.username", postgresContainer::getUsername)
             registry.add("spring.datasource.password", postgresContainer::getPassword)
+            registry.add("spring.flyway.enabled") { "true" }
         }
     }
 }
+
+class ContainerSmokeTest {
+
+    @Test
+    fun testContainer() {
+        PostgreSQLContainer("postgres:16").start()
+    }
+}
+
